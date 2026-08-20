@@ -77,6 +77,8 @@ const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc'
 
 // 订单 KV 键名（所有订单列表）
 const ORDERS_KV_KEY = 'all_orders'
+// 厨师身份 KV 键名
+const CHEF_KV_KEY = 'chef_openid'
 
 async function sendSubscribeMessage(env, params) {
   const { openid, templateId, items, total, orderTime, page } = params
