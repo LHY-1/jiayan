@@ -35,6 +35,10 @@
     <view class="section">
       <text class="section-label">常用设置</text>
       <view class="settings-card">
+        <view class="menu-row" bindtap="subscribeNotify">
+          <text>🔔 消息订阅授权</text>
+          <text class="menu-arrow">开启通知 ›</text>
+        </view>
         <view class="menu-row" bindtap="goToManage">
           <text>菜品管理</text>
           <text class="menu-arrow">管理菜单 ›</text>

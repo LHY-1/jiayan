@@ -253,7 +253,7 @@ Page({
             if (chefOpenid) {
               const chefPayload = {
                 openid: chefOpenid,
-                templateId: SUBMIT_TEMPLATE_ID,
+                action: 'submit',
                 items: pendingItems.map(i => ({ name: i.name, qty: i.qty })),
                 total: this.data.total,
                 orderTime: new Date().toISOString()
@@ -270,8 +270,6 @@ Page({
               wx.showToast({ title: '厨师未确认身份', icon: 'none', duration: 2000 })
             }
           })
-          // 推给下单的人自己
-          this._pushWechatNotify(app, openid, SUBMIT_TEMPLATE_ID)
         }
         if (res[FINISH_TEMPLATE_ID] === 'accept') wx.setStorageSync('_finish_subscribed', true)
       },
@@ -342,35 +340,6 @@ Page({
           resolve([])
         }
       })
-    })
-  },
-
-  _pushWechatNotify(app, openid, templateId) {
-    console.log('[推送] openid:', openid, 'templateId:', templateId)
-    if (!openid) {
-      console.log('[推送] openid 不存在，跳过')
-      return
-    }
-    const pending = wx.getStorageSync('_pending_notify') || {}
-    const payload = {
-      openid: openid,
-      templateId: templateId,
-      items: pending.items || [],
-      total: pending.total || 0,
-      orderTime: pending.orderTime || new Date().toISOString()
-    }
-    wx.request({
-      url: WORKER_URL + '/push',
-      method: 'POST',
-      header: { 'Content-Type': 'application/json' },
-      data: payload,
-      success: (res) => {
-        console.log('[推送] 结果', res.data)
-        if (res.data && res.data.code !== 0) {
-          wx.showToast({ title: res.data.msg || '推送失败', icon: 'none' })
-        }
-      },
-      fail: (err) => console.error('[推送] 失败', err)
     })
   },
 
@@ -515,7 +484,7 @@ Page({
     this._addNotification('下单者', '👨‍🍳 开始做菜', `开始制作：${dish.name}`, orderId, 'status_update')
     wx.showToast({ title: `开始做：${dish.name}`, icon: 'success' })
     // 推送下单者：这道菜开始做了
-    this._pushDishNotify(dish, SUBMIT_TEMPLATE_ID)
+    this._pushDishNotify(dish, 'start')
   },
 
   // 完成：只针对这一道菜
@@ -532,11 +501,11 @@ Page({
     this._addNotification('下单者', '🍽️ 菜做好了', `${dish.name} 已完成，趁热吃！`, orderId, 'status_update')
     wx.showToast({ title: `${dish.name} 完成`, icon: 'success' })
     // 推送下单者：这道菜做好了
-    this._pushDishNotify(dish, FINISH_TEMPLATE_ID)
+    this._pushDishNotify(dish, 'finish')
   },
 
-  // 推送单道菜状态给下单者
-  _pushDishNotify(dish, templateId) {
+  // 推送单道菜状态给下单者（action: start=开始做 / finish=完成）
+  _pushDishNotify(dish, action) {
     const ordererOpenid = dish.ordererOpenid
     if (!ordererOpenid) {
       console.log('[推送] 无下单者 openid，跳过')
@@ -544,7 +513,7 @@ Page({
     }
     const payload = {
       openid: ordererOpenid,
-      templateId: templateId,
+      action: action,
       items: [{ name: dish.name, qty: dish.qty }],
       total: dish.subtotal || dish.price * dish.qty,
       orderTime: new Date().toISOString()

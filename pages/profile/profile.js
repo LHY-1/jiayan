@@ -52,6 +52,33 @@ Page({
     wx.navigateTo({ url: '/pages/notifications/notifications' });
   },
 
+  // 订阅消息授权（微信订阅是一次性的，需要定期重新授权才能持续收到通知）
+  subscribeNotify() {
+    const SUBMIT_TEMPLATE_ID = 'Q5yDGEZM1o23liVkmMLZ4sltKDSop3tukazyfy21yBc';
+    const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc';
+    if (typeof wx.requestSubscribeMessage !== 'function') {
+      wx.showToast({ title: '当前版本不支持订阅消息', icon: 'none' });
+      return;
+    }
+    wx.requestSubscribeMessage({
+      tmplIds: [SUBMIT_TEMPLATE_ID, FINISH_TEMPLATE_ID],
+      success: (res) => {
+        let granted = 0;
+        if (res[SUBMIT_TEMPLATE_ID] === 'accept') granted++;
+        if (res[FINISH_TEMPLATE_ID] === 'accept') granted++;
+        if (granted > 0) {
+          wx.showToast({ title: `已授权 ${granted} 个通知`, icon: 'success' });
+        } else {
+          wx.showToast({ title: '未授权任何通知', icon: 'none' });
+        }
+      },
+      fail: (err) => {
+        console.error('[订阅] 失败', err);
+        wx.showToast({ title: '授权失败，请重试', icon: 'none' });
+      }
+    });
+  },
+
   goToHistory() {
     wx.navigateTo({ url: '/pages/history/history' });
   },

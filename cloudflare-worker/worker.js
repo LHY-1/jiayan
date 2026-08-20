@@ -163,16 +163,19 @@ async function handleSaveMenu(request, env) {
 }
 
 // 推送订阅消息
+// body: { openid, action: 'submit'|'start'|'finish', items, total, orderTime }
 async function handlePush(request, env) {
   let body
   try { body = await request.json() } catch { return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400) }
-  const { openid, templateId, items, total, orderTime } = body
-  if (!openid || !templateId) {
-    return jsonResponse({ code: 400, msg: '缺少 openid 或 templateId' }, 400)
+  const { openid, action, items, total, orderTime } = body
+  if (!openid) {
+    return jsonResponse({ code: 400, msg: '缺少 openid' }, 400)
   }
   try {
     const result = await sendSubscribeMessage(env, {
-      openid, templateId, items: items || [], total: total || 0,
+      openid,
+      action: action || 'submit',
+      items: items || [], total: total || 0,
       orderTime: orderTime || new Date().toISOString(),
       page: 'pages/order/order'
     })
@@ -185,11 +188,23 @@ async function handlePush(request, env) {
 // ==================== 核心逻辑 ====================
 
 async function sendSubscribeMessage(env, params) {
-  const { openid, templateId, items, total, orderTime, page } = params
+  const { openid, action, items, total, orderTime, page } = params
   const { access_token } = await getAccessToken(env)
-  const data = templateId === FINISH_TEMPLATE_ID
-    ? buildFinishMessageData(items, total, orderTime)
-    : buildSubmitMessageData(items, total, orderTime)
+  // 按消息类型选模板和字段
+  let templateId = SUBMIT_TEMPLATE_ID
+  let data
+  if (action === 'finish') {
+    templateId = FINISH_TEMPLATE_ID
+    data = buildFinishMessageData(items, total, orderTime)
+  } else if (action === 'start') {
+    // 开始做：复用下单通知模板，语义是「厨师开始做这道菜」
+    templateId = SUBMIT_TEMPLATE_ID
+    data = buildStartMessageData(items, total, orderTime)
+  } else {
+    // submit：新订单通知（推给厨师）
+    templateId = SUBMIT_TEMPLATE_ID
+    data = buildSubmitMessageData(items, total, orderTime)
+  }
   const res = await fetch(
     `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${access_token}`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -202,25 +217,37 @@ async function sendSubscribeMessage(env, params) {
   return { code: 0, msg: 'success' }
 }
 
-// 下单通知模板：菜品名称(thing5)、下单时间(time1)、下单用户(thing4)
+// 新订单通知（推给厨师）：菜品名称(thing5)、下单时间(time1)、下单用户(thing4)
 function buildSubmitMessageData(items, total, orderTime) {
   const itemStr = items.length > 0
     ? items.map(i => `${i.name || i}×${i.qty || 1}`).join('、')
     : '已下单'
   return {
-    thing5: { value: itemStr },
+    thing5: { value: itemStr.slice(0, 20) },
     time1:  { value: formatTime(orderTime) },
     thing4: { value: '原' }
   }
 }
 
-// 完成通知模板：菜品名称(thing4)、完成时间(time1)、完成用户(thing3)
+// 开始做通知（推给下单者）：菜品名称(thing5)、开始时间(time1)、制作人(thing4)
+function buildStartMessageData(items, total, orderTime) {
+  const itemStr = items.length > 0
+    ? items.map(i => `${i.name || i}×${i.qty || 1}`).join('、')
+    : '已开始'
+  return {
+    thing5: { value: itemStr.slice(0, 20) },
+    time1:  { value: formatTime(orderTime || new Date().toISOString()) },
+    thing4: { value: '厨师' }
+  }
+}
+
+// 完成通知（推给下单者）：菜品名称(thing4)、完成时间(time1)、完成用户(thing3)
 function buildFinishMessageData(items, total, orderTime) {
   const itemStr = items.length > 0
     ? items.map(i => `${i.name || i}×${i.qty || 1}`).join('、')
     : '已下单'
   return {
-    thing4: { value: itemStr },
+    thing4: { value: itemStr.slice(0, 20) },
     time1:  { value: formatTime(orderTime || new Date().toISOString()) },
     thing3: { value: '厨师' }
   }
