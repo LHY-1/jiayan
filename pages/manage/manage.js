@@ -88,45 +88,107 @@ Page({
     this.setData({ filteredDishes: filtered, filteredCount: filtered.length })
   },
 
-  // 图片上传：压缩后转 base64，保证云端同步后全家人可见
-  // 质量 80 保证清晰；单张限 400KB；总量限 900KB（微信本地存储单 key 上限 1MB）
+  // 图片上传：自动缩放 + 压缩转 base64，大照片也能直接传，无需手动编辑
+  // 策略：先缩到 1080px 宽，超限自动降到 720→540，保证清晰且体积可控
   onChooseImage() {
     wx.chooseMedia({
       count: 1, mediaType: ['image'], sizeType: ['compressed'],
       success: (res) => {
         const tempPath = res.tempFiles[0].tempFilePath
         wx.showLoading({ title: '处理图片...' })
-        // 先压缩
-        wx.compressImage({
-          src: tempPath,
-          quality: 80,
-          success: (cr) => {
-            const compressedPath = cr.tempFilePath || tempPath
-            // 转 base64
-            wx.getFileSystemManager().readFile({
-              filePath: compressedPath,
-              encoding: 'base64',
-              success: (fr) => {
-                wx.hideLoading()
-                const b64 = fr.data
-                if (b64.length > 400 * 1024) {
-                  wx.showToast({ title: '图片较大，建议选更小的照片', icon: 'none' })
-                  return
-                }
-                this.setData({ 'form.image': 'data:image/jpeg;base64,' + b64 })
-                wx.showToast({ title: '图片已就绪', icon: 'success' })
-              },
-              fail: () => {
-                wx.hideLoading()
-                wx.showToast({ title: '图片处理失败', icon: 'none' })
+        this._processImage(tempPath, 0)
+      }
+    })
+  },
+
+  // 逐级缩放直到体积达标
+  _processImage(src, attempt) {
+    const sizes = [1080, 720, 540]
+    const maxW = sizes[attempt] !== undefined ? sizes[attempt] : 540
+    const done = (dataUrl) => {
+      wx.hideLoading()
+      if (dataUrl) {
+        this.setData({ 'form.image': dataUrl })
+        wx.showToast({ title: '图片已就绪', icon: 'success' })
+      } else {
+        this._fallbackCompress(src)
+      }
+    }
+    wx.getImageInfo({
+      src,
+      success: (info) => {
+        const { width, height } = info
+        if (!width || !height) { done(''); return }
+        const ratio = width / height
+        let targetW = width
+        let targetH = height
+        if (width > maxW) {
+          targetW = maxW
+          targetH = Math.max(1, Math.round(maxW / ratio))
+        }
+        // 用离屏 canvas 缩放
+        try {
+          const canvas = wx.createOffscreenCanvas({ type: '2d', width: targetW, height: targetH })
+          const ctx = canvas.getContext('2d')
+          const img = canvas.createImage()
+          img.onload = () => {
+            try {
+              ctx.drawImage(img, 0, 0, targetW, targetH)
+              let dataUrl = ''
+              try {
+                dataUrl = canvas.toDataURL('image/jpeg', 0.78)
+              } catch (e) {
+                dataUrl = ''
               }
-            })
+              if (dataUrl && dataUrl.length > 400 * 1024 && attempt < sizes.length - 1) {
+                // 还大，继续缩小一档
+                this._processImage(src, attempt + 1)
+                return
+              }
+              done(dataUrl || '')
+            } catch (err) {
+              done('')
+            }
+          }
+          img.onerror = () => done('')
+          img.src = src
+        } catch (err) {
+          done('')
+        }
+      },
+      fail: () => done('')
+    })
+  },
+
+  // 降级方案：不支持 canvas 时用纯质量压缩
+  _fallbackCompress(src) {
+    wx.compressImage({
+      src,
+      quality: 60,
+      success: (cr) => {
+        const compressedPath = cr.tempFilePath || src
+        wx.getFileSystemManager().readFile({
+          filePath: compressedPath,
+          encoding: 'base64',
+          success: (fr) => {
+            wx.hideLoading()
+            const b64 = fr.data
+            if (b64.length > 400 * 1024) {
+              wx.showToast({ title: '照片较大，可先在相册里裁剪一下', icon: 'none', duration: 2500 })
+              return
+            }
+            this.setData({ 'form.image': 'data:image/jpeg;base64,' + b64 })
+            wx.showToast({ title: '图片已就绪', icon: 'success' })
           },
           fail: () => {
             wx.hideLoading()
-            wx.showToast({ title: '图片压缩失败', icon: 'none' })
+            wx.showToast({ title: '图片处理失败', icon: 'none' })
           }
         })
+      },
+      fail: () => {
+        wx.hideLoading()
+        wx.showToast({ title: '图片压缩失败', icon: 'none' })
       }
     })
   },
