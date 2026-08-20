@@ -1,8 +1,7 @@
 name = "jiayan-notify"
 main = "worker.js"
 compatibility_date = "2024-01-01"
-compatibility_flags = []
 
-[vars]
-# APPID 和 APPSECRET 请在 Dashboard → Settings → Variables 配置
-# ORDERS_KV KV Namespace 请在 Dashboard → Settings → Bindings 配置
+[[kv_namespaces]]
+binding = "ORDERS_KV"
+id = "73b6182354154f3abd5d9ea12b0660d6"
