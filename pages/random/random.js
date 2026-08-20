@@ -2,6 +2,7 @@
 const app = getApp()
 const { dishes: builtinDishes, tasteTags, peopleOptions, meatOptions } = require('../../utils/data')
 const { randomCombo } = require('../../utils/util')
+const { fetchCloudMenu } = require('../../utils/menu-sync')
 
 function getAllDishes() {
   const cached = wx.getStorageSync('dishes_manage') || []
@@ -33,7 +34,16 @@ Page({
     })
   },
 
-  onShow() { this.loadDishes() },
+  onShow() {
+    this.loadDishes()
+    // 从云端拉取最新菜单
+    fetchCloudMenu().then(cloudDishes => {
+      if (cloudDishes && cloudDishes.length > 0) {
+        wx.setStorageSync('dishes_manage', cloudDishes)
+        this.loadDishes()
+      }
+    })
+  },
 
   loadDishes() {
     this.setData({ allDishes: getAllDishes() })

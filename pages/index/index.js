@@ -1,5 +1,6 @@
 // pages/index/index.js
 const { dishes: builtinDishes, categories } = require('../../utils/data');
+const { fetchCloudMenu } = require('../../utils/menu-sync');
 
 // 合并所有菜品（内置 + 自定义），和 manage 页一致
 function getAllDishes() {
@@ -33,6 +34,13 @@ Page({
   onShow() {
     this.loadDishes()
     this._updateCartCount()
+    // 从云端拉取最新菜单（家人编辑后自动同步）
+    fetchCloudMenu().then(cloudDishes => {
+      if (cloudDishes && cloudDishes.length > 0) {
+        wx.setStorageSync('dishes_manage', cloudDishes)
+        this.loadDishes()
+      }
+    })
   },
 
   loadDishes() {

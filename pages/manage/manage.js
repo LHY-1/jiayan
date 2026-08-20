@@ -1,5 +1,6 @@
 // pages/manage/manage.js
 const { dishes: builtinDishes, categories } = require('../../utils/data');
+const { fetchCloudMenu, pushCloudMenu } = require('../../utils/menu-sync');
 
 Page({
   data: {
@@ -44,6 +45,14 @@ Page({
 
   onShow() {
     this.refresh()
+    // 从云端拉取最新菜单，有云端数据则用云端覆盖本地
+    fetchCloudMenu().then(cloudDishes => {
+      if (cloudDishes && cloudDishes.length > 0) {
+        wx.setStorageSync('dishes_manage', cloudDishes)
+        this.refresh()
+        wx.showToast({ title: '已同步云端菜单', icon: 'none' })
+      }
+    })
   },
 
   refresh() {
@@ -185,6 +194,8 @@ Page({
     wx.setStorageSync('dishes_manage', cached)
     this.refresh()
     this.closeAdd()
+    // 推送到云端，全家人同步
+    pushCloudMenu(this._mergeAllDishes())
     wx.showToast({ title: editId ? '已更新' : '已添加', icon: 'success' })
   },
 
@@ -206,6 +217,8 @@ Page({
         cached.push({ id, _hidden: true })
         wx.setStorageSync('dishes_manage', cached)
         this.refresh()
+        // 推送到云端
+        pushCloudMenu(this._mergeAllDishes())
         wx.showToast({ title: '已删除', icon: 'success' })
       }
     })
@@ -220,6 +233,7 @@ Page({
       [merged[idx - 1], merged[idx]] = [merged[idx], merged[idx - 1]]
       this._saveMerged(merged)
       this.refresh()
+      pushCloudMenu(merged)
     }
   },
 
@@ -231,6 +245,7 @@ Page({
       [merged[idx], merged[idx + 1]] = [merged[idx + 1], merged[idx]]
       this._saveMerged(merged)
       this.refresh()
+      pushCloudMenu(merged)
     }
   }
 })

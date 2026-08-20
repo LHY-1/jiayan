@@ -1,4 +1,6 @@
 // pages/favorites/favorites.js
+const { fetchCloudMenu } = require('../../utils/menu-sync');
+
 Page({
   data: {
     favorites: [],
@@ -7,6 +9,13 @@ Page({
 
   onShow() {
     this.loadFavs();
+    // 从云端拉取最新菜单
+    fetchCloudMenu().then(cloudDishes => {
+      if (cloudDishes && cloudDishes.length > 0) {
+        wx.setStorageSync('dishes_manage', cloudDishes);
+        this.loadFavs();
+      }
+    });
   },
 
   loadFavs() {

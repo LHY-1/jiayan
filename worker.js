@@ -38,6 +38,14 @@ export default {
     if (request.method === 'GET' && url.pathname === '/chef') {
       return handleGetChef(env)
     }
+    // GET /menu — 拉取云端菜单
+    if (request.method === 'GET' && url.pathname === '/menu') {
+      return handleFetchMenu(env)
+    }
+    // POST /menu — 保存云端菜单
+    if (request.method === 'POST' && url.pathname === '/menu') {
+      return handleSaveMenu(request, env)
+    }
     // POST /push — 推送订阅消息
     if (request.method === 'POST' && url.pathname === '/push') {
       return handlePush(request, env)
@@ -52,6 +60,9 @@ const SUBMIT_TEMPLATE_ID = 'Q5yDGEZM1o23liVkmMLZ4sltKDSop3tukazyfy21yBc'
 const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc'
 const ORDERS_KV_KEY = 'orders'
 const CHEF_KV_KEY = 'chef_openid'
+
+// 菜单 KV 键名
+const MENU_KV_KEY = 'jiayan_menu'
 
 // ==================== 路由处理 ====================
 
@@ -130,6 +141,25 @@ async function handleChef(request, env) {
 async function handleGetChef(env) {
   const openid = await env.CHEF_KV.get(CHEF_KV_KEY)
   return jsonResponse({ code: 0, chefOpenid: openid || '' })
+}
+
+// 拉取云端菜单
+async function handleFetchMenu(env) {
+  const raw = await env.ORDERS_KV.get(MENU_KV_KEY)
+  const dishes = raw ? JSON.parse(raw) : null
+  return jsonResponse({ code: 0, dishes })
+}
+
+// 保存云端菜单
+async function handleSaveMenu(request, env) {
+  let body
+  try { body = await request.json() } catch { return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400) }
+  const { dishes } = body
+  if (!dishes || !Array.isArray(dishes)) {
+    return jsonResponse({ code: 400, msg: '缺少 dishes 数组' }, 400)
+  }
+  await env.ORDERS_KV.put(MENU_KV_KEY, JSON.stringify(dishes), { expirationTtl: 86400 * 30 })
+  return jsonResponse({ code: 0, msg: '菜单已保存' })
 }
 
 // 推送订阅消息

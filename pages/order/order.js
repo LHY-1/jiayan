@@ -90,6 +90,21 @@ Page({
     wx.setStorageSync('chef_openid', openid)
     wx.setStorageSync('chef_confirmed', true)
     this.setData({ chefOpenid: openid, chefConfirmed: true })
+    // 请求订阅授权：厨师授权「新订单通知」模板，才能收到下单推送
+    if (typeof wx.requestSubscribeMessage === 'function') {
+      wx.requestSubscribeMessage({
+        tmplIds: [SUBMIT_TEMPLATE_ID],
+        success: (res) => {
+          if (res[SUBMIT_TEMPLATE_ID] === 'accept') {
+            wx.setStorageSync('_chef_subscribed', true)
+            console.log('[推送] 厨师已授权新订单通知')
+          } else {
+            console.log('[推送] 厨师未授权新订单通知')
+          }
+        },
+        fail: (err) => console.error('[推送] 订阅失败', err)
+      })
+    }
     // 同步到云端，清除其他人的厨师身份
     wx.request({
       url: WORKER_URL + '/chef',
@@ -104,6 +119,21 @@ Page({
       }
     })
     console.log('[推送] 厨师openid已更新:', openid)
+  },
+
+  // 从云端获取当前厨师 openid（下单者设备也能拿到）
+  _fetchChefOpenid() {
+    return new Promise((resolve) => {
+      wx.request({
+        url: WORKER_URL + '/chef',
+        method: 'GET',
+        timeout: 5000,
+        success: (res) => {
+          resolve((res.data && res.data.chefOpenid) || '')
+        },
+        fail: () => resolve('')
+      })
+    })
   },
 
   // 角色切换
@@ -218,27 +248,28 @@ Page({
         this.submitting = false
         this._completeOrder(app, openid)
         if (res[SUBMIT_TEMPLATE_ID] === 'accept') {
-          // 推给厨师（所有菜品汇总）
-          const chefOpenid = wx.getStorageSync('chef_openid')
-          if (chefOpenid) {
-            const chefPayload = {
-              openid: chefOpenid,
-              templateId: SUBMIT_TEMPLATE_ID,
-              items: pendingItems.map(i => ({ name: i.name, qty: i.qty })),
-              total: this.data.total,
-              orderTime: new Date().toISOString()
+          // 从云端获取厨师 openid（下单者设备本地没有这个值）
+          this._fetchChefOpenid().then(chefOpenid => {
+            if (chefOpenid) {
+              const chefPayload = {
+                openid: chefOpenid,
+                templateId: SUBMIT_TEMPLATE_ID,
+                items: pendingItems.map(i => ({ name: i.name, qty: i.qty })),
+                total: this.data.total,
+                orderTime: new Date().toISOString()
+              }
+              wx.request({
+                url: WORKER_URL + '/push',
+                method: 'POST',
+                header: { 'Content-Type': 'application/json' },
+                data: chefPayload,
+                success: (res) => console.log('[推送] 厨师', res.data),
+                fail: (err) => console.error('[推送] 失败', err)
+              })
+            } else {
+              wx.showToast({ title: '厨师未确认身份', icon: 'none', duration: 2000 })
             }
-            wx.request({
-              url: WORKER_URL + '/push',
-              method: 'POST',
-              header: { 'Content-Type': 'application/json' },
-              data: chefPayload,
-              success: (res) => console.log('[推送] 厨师', res.data),
-              fail: (err) => console.error('[推送] 失败', err)
-            })
-          } else {
-            wx.showToast({ title: '厨师未确认身份', icon: 'none', duration: 2000 })
-          }
+          })
           // 推给下单的人自己
           this._pushWechatNotify(app, openid, SUBMIT_TEMPLATE_ID)
         }
