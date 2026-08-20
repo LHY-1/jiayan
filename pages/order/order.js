@@ -293,7 +293,7 @@ Page({
     const order = {
       id: Date.now(),
       time: new Date().toISOString(),
-      items: this.data.cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty, subtotal: i.subtotal })),
+      items: this.data.cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty, subtotal: i.subtotal, status: '已下单' })),
       total: this.data.total,
       totalQty: this.data.totalQty,
       status: '已下单',
@@ -385,7 +385,7 @@ Page({
     }
   },
 
-  // 厨师操作
+  // 厨师操作：加载待做菜品（按菜品维度展开，只显示未完成的菜）
   loadPendingOrders() {
     this._fetchOrdersFromCloud().then(cloudOrders => {
       const localCache = {}
@@ -394,12 +394,77 @@ Page({
       cloudOrders.forEach(o => merged[o.id] = o)
       Object.values(localCache).forEach(o => { if (!merged[o.id]) merged[o.id] = o })
       const allOrders = Object.values(merged).sort((a, b) => b.id - a.id)
-      const pending = allOrders.filter(o => o.status === '已下单' || o.status === '烹饪中')
-      this.setData({ pendingOrders: pending.map(o => ({ ...o, timeStr: this._fmtTime(o.time) })) })
+      this.setData({ pendingOrders: this._flattenPendingDishes(allOrders) })
     }).catch(() => {
       const localHistory = wx.getStorageSync('orderHistory') || []
-      const pending = localHistory.filter(o => o.status === '已下单' || o.status === '烹饪中')
-      this.setData({ pendingOrders: pending.map(o => ({ ...o, timeStr: this._fmtTime(o.time) })) })
+      this.setData({ pendingOrders: this._flattenPendingDishes(localHistory) })
+    })
+  },
+
+  // 把订单列表展开成菜品级待办列表（只保留未完成的菜）
+  _flattenPendingDishes(orders) {
+    const dishList = []
+    orders.forEach(o => {
+      const orderTimeStr = this._fmtTime(o.time)
+      ;(o.items || []).forEach(dish => {
+        const dStatus = dish.status || '已下单'
+        if (dStatus === '已完成') return
+        dishList.push({
+          key: o.id + '-' + dish.id,
+          orderId: o.id,
+          dishId: dish.id,
+          name: dish.name,
+          qty: dish.qty || 1,
+          price: dish.price,
+          subtotal: dish.subtotal || dish.price * (dish.qty || 1),
+          status: dStatus,
+          orderTimeStr,
+          ordererOpenid: o.ordererOpenid
+        })
+      })
+    })
+    return dishList
+  },
+
+  // 派生订单整体状态：全部完成→已完成；有在做→烹饪中；否则→已下单
+  _deriveOrderStatus(order) {
+    const items = order.items || []
+    if (items.length === 0) return '已下单'
+    const allDone = items.every(i => (i.status || '已下单') === '已完成')
+    if (allDone) return '已完成'
+    const anyCooking = items.some(i => (i.status || '已下单') === '烹饪中')
+    return anyCooking ? '烹饪中' : '已下单'
+  },
+
+  // 更新单道菜状态，同步云端+本地，并派生订单状态
+  _updateDishStatus(orderId, dishId, newStatus, cb) {
+    this._fetchOrdersFromCloud().then(cloudOrders => {
+      const order = cloudOrders.find(o => o.id === orderId)
+      if (order) {
+        const dish = (order.items || []).find(d => d.id === dishId)
+        if (dish) dish.status = newStatus
+        order.status = this._deriveOrderStatus(order)
+        this._syncOrderToCloud(order)
+        // 同步本地历史
+        const history = wx.getStorageSync('orderHistory') || []
+        const idx = history.findIndex(o => o.id === orderId)
+        if (idx >= 0) { history[idx] = order } else { history.unshift(order) }
+        wx.setStorageSync('orderHistory', history)
+        if (cb) cb(order)
+      } else {
+        // 云端没有，改本地
+        const history = wx.getStorageSync('orderHistory') || []
+        const localOrder = history.find(o => o.id === orderId)
+        if (localOrder) {
+          const dish = (localOrder.items || []).find(d => d.id === dishId)
+          if (dish) dish.status = newStatus
+          localOrder.status = this._deriveOrderStatus(localOrder)
+          wx.setStorageSync('orderHistory', history)
+          this._syncOrderToCloud(localOrder)
+          if (cb) cb(localOrder)
+        }
+      }
+      this.loadPendingOrders()
     })
   },
 
@@ -435,62 +500,62 @@ Page({
     })
   },
 
+  // 开始做：只针对这一道菜
   startCooking(e) {
-    const orderId = Number(e.currentTarget.dataset.id)
+    const orderId = Number(e.currentTarget.dataset.orderId)
+    const dishId = Number(e.currentTarget.dataset.dishId)
     this.saveChefOpenid()
-    // 乐观更新：立即改UI，再后台同步云端
-    const pending = [...this.data.pendingOrders]
-    const order = pending.find(o => o.id === orderId)
-    if (order) {
-      order.status = '烹饪中'
-      this.setData({ pendingOrders: pending })
-    }
-    this._syncOrderToCloud({ ...order, status: '烹饪中' })
-    this._addNotification('下单者', '👨‍🍳 开始做菜', '', orderId, 'status_update')
-    wx.showToast({ title: '已开始制作', icon: 'success' })
-    // 给下单者推送每道菜的开始通知
-    this._pushDishNotifications(order, '开始制作', SUBMIT_TEMPLATE_ID)
+    const dish = this.data.pendingOrders.find(d => d.orderId === orderId && d.dishId === dishId)
+    if (!dish) return
+    // 乐观更新 UI
+    dish.status = '烹饪中'
+    this.setData({ pendingOrders: [...this.data.pendingOrders] })
+    // 同步云端 + 派生订单状态
+    this._updateDishStatus(orderId, dishId, '烹饪中')
+    this._addNotification('下单者', '👨‍🍳 开始做菜', `开始制作：${dish.name}`, orderId, 'status_update')
+    wx.showToast({ title: `开始做：${dish.name}`, icon: 'success' })
+    // 推送下单者：这道菜开始做了
+    this._pushDishNotify(dish, SUBMIT_TEMPLATE_ID)
   },
 
+  // 完成：只针对这一道菜
   finishCooking(e) {
-    const orderId = Number(e.currentTarget.dataset.id)
-    const pending = [...this.data.pendingOrders]
-    const order = pending.find(o => o.id === orderId)
-    if (order) {
-      order.status = '已完成'
-      this.setData({ pendingOrders: pending })
-    }
-    this._syncOrderToCloud({ ...order, status: '已完成' })
-    this._addNotification('下单者', '🍽️ 菜做好了', '', orderId, 'status_update')
-    wx.showToast({ title: '已完成', icon: 'success' })
-    // 给下单者推送每道菜的完成通知
-    this._pushDishNotifications(order, '完成', FINISH_TEMPLATE_ID)
+    const orderId = Number(e.currentTarget.dataset.orderId)
+    const dishId = Number(e.currentTarget.dataset.dishId)
+    const dish = this.data.pendingOrders.find(d => d.orderId === orderId && d.dishId === dishId)
+    if (!dish) return
+    // 乐观更新 UI
+    dish.status = '已完成'
+    this.setData({ pendingOrders: this.data.pendingOrders.filter(d => !(d.orderId === orderId && d.dishId === dishId)) })
+    // 同步云端 + 派生订单状态
+    this._updateDishStatus(orderId, dishId, '已完成')
+    this._addNotification('下单者', '🍽️ 菜做好了', `${dish.name} 已完成，趁热吃！`, orderId, 'status_update')
+    wx.showToast({ title: `${dish.name} 完成`, icon: 'success' })
+    // 推送下单者：这道菜做好了
+    this._pushDishNotify(dish, FINISH_TEMPLATE_ID)
   },
 
-  // 给下单者推送每道菜的单独通知
-  _pushDishNotifications(order, action, templateId) {
-    const app = getApp()
-    const ordererOpenid = order && order.ordererOpenid || app.globalData.openid
-    if (!ordererOpenid) return
-    // 每道菜推送一次
-    ;(order.items || []).forEach(dish => {
-      const payload = {
-        openid: ordererOpenid,
-        templateId: templateId,
-        items: [{ name: dish.name, qty: dish.qty }],
-        total: dish.subtotal || dish.price * dish.qty,
-        orderTime: new Date().toISOString()
-      }
-      wx.request({
-        url: WORKER_URL + '/push',
-        method: 'POST',
-        header: { 'Content-Type': 'application/json' },
-        data: payload,
-        success: (res) => {
-          console.log('[推送] 菜品通知', dish.name, res.data)
-        },
-        fail: (err) => console.error('[推送] 失败', err)
-      })
+  // 推送单道菜状态给下单者
+  _pushDishNotify(dish, templateId) {
+    const ordererOpenid = dish.ordererOpenid
+    if (!ordererOpenid) {
+      console.log('[推送] 无下单者 openid，跳过')
+      return
+    }
+    const payload = {
+      openid: ordererOpenid,
+      templateId: templateId,
+      items: [{ name: dish.name, qty: dish.qty }],
+      total: dish.subtotal || dish.price * dish.qty,
+      orderTime: new Date().toISOString()
+    }
+    wx.request({
+      url: WORKER_URL + '/push',
+      method: 'POST',
+      header: { 'Content-Type': 'application/json' },
+      data: payload,
+      success: (res) => console.log('[推送] 菜品通知', dish.name, res.data),
+      fail: (err) => console.error('[推送] 失败', err)
     })
   },
 

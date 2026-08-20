@@ -123,6 +123,29 @@
   margin: 0 20rpx;
 }
 
+.detail-dish-status {
+  font-size: 20rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.detail-dish-status.pending {
+  background: #fce8e7;
+  color: #c73e3a;
+}
+
+.detail-dish-status.cooking {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.detail-dish-status.done {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
 .detail-price {
   font-size: 24rpx;
   font-weight: 600;

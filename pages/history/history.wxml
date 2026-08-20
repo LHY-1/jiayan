@@ -25,6 +25,7 @@
         <view wx:for="{{item.items}}" wx:key="id" class="detail-row">
           <text class="detail-name">{{item.name}}</text>
           <text class="detail-qty">×{{item.qty}}</text>
+          <text class="detail-dish-status {{item.status === '已完成' ? 'done' : item.status === '烹饪中' ? 'cooking' : 'pending'}}">{{item.status || '已下单'}}</text>
           <text class="detail-price">¥{{item.subtotal}}</text>
         </view>
         <view class="detail-total">

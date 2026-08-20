@@ -80,21 +80,18 @@
       <text class="debug-hint">点击测试电脑是否可访问云端</text>
     </view>
     <view wx:if="{{pendingOrders.length > 0 && chefConfirmed}}" class="chef-order-list">
-      <!-- 每道菜一个卡片 -->
-      <view wx:for="{{pendingOrders}}" wx:key="id" wx:for-item="order">
-        <view wx:for="{{order.items}}" wx:key="id" wx:for-item="dish" class="chef-dish-card">
-          <view class="chef-dish-header">
-            <text class="chef-dish-name">{{dish.name}}</text>
-            <text class="chef-dish-qty" wx:if="{{dish.qty > 1}}">×{{dish.qty}}</text>
-            <text class="chef-order-status {{order.status==='已完成'?'done':order.status==='烹饪中'?'cooking':'pending'}}">{{order.status}}</text>
-          </view>
-          <view class="chef-dish-time">{{order.timeStr}}</view>
-          <view class="chef-actions">
-            <button wx:if="{{order.status==='已下单'}}" class="chef-btn cooking" bindtap="startCooking" data-id="{{order.id}}">👨‍🍳 开始做</button>
-            <button wx:if="{{order.status==='烹饪中'}}" class="chef-btn done" bindtap="finishCooking" data-id="{{order.id}}">✅ 完成</button>
-            <text wx:if="{{order.status==='已完成'}}" class="chef-done-label">🍽️ 已出餐</text>
-            <button class="chef-btn delete" bindtap="deleteOrder" data-id="{{order.id}}">🗑️ 删除</button>
-          </view>
+      <!-- 每道菜一个卡片，独立推进状态 -->
+      <view wx:for="{{pendingOrders}}" wx:key="key" class="chef-dish-card">
+        <view class="chef-dish-header">
+          <text class="chef-dish-name">{{item.name}}</text>
+          <text class="chef-dish-qty" wx:if="{{item.qty > 1}}">×{{item.qty}}</text>
+          <text class="chef-order-status {{item.status==='烹饪中'?'cooking':'pending'}}">{{item.status}}</text>
+        </view>
+        <view class="chef-dish-time">下单 {{item.orderTimeStr}}</view>
+        <view class="chef-actions">
+          <button wx:if="{{item.status==='已下单'}}" class="chef-btn cooking" bindtap="startCooking" data-order-id="{{item.orderId}}" data-dish-id="{{item.dishId}}">👨‍🍳 开始做</button>
+          <button wx:if="{{item.status==='烹饪中'}}" class="chef-btn done" bindtap="finishCooking" data-order-id="{{item.orderId}}" data-dish-id="{{item.dishId}}">✅ 完成</button>
+          <button class="chef-btn delete" bindtap="deleteOrder" data-id="{{item.orderId}}">🗑️ 删单</button>
         </view>
       </view>
     </view>
