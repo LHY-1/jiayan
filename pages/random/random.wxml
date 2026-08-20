@@ -1,0 +1,63 @@
+<!-- pages/random/random.wxml -->
+<view class="page">
+  <view class="header">
+    <text class="title">随机组菜</text>
+    <text class="subtitle">今天吃什么？让「家宴」帮你决定</text>
+  </view>
+
+  <view class="content">
+    <view class="welcome-card">
+      <view class="star-icon">⭐</view>
+      <text class="welcome-title">随机搭配一餐</text>
+      <text class="welcome-desc">根据你的偏好，智能搭配今日菜单</text>
+    </view>
+
+    <view class="section">
+      <text class="section-label">用餐人数</text>
+      <view class="chip-row">
+        <view wx:for="{{peopleOptions}}" wx:key="value" class="chip {{selectedPeople === item.value ? 'selected' : ''}}" data-value="{{item.value}}" bindtap="selectPeople">{{item.label}}</view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-label">口味偏好</text>
+      <view class="chip-row">
+        <view wx:for="{{tasteTags}}" wx:key="*this" class="chip {{selectedTastes.indexOf(item) > -1 ? 'selected' : ''}}" data-value="{{item}}" bindtap="toggleTaste">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-label">荤素偏好</text>
+      <view class="chip-row">
+        <view wx:for="{{meatOptions}}" wx:key="value" class="chip {{selectedMeat === item.value ? 'selected' : ''}}" data-value="{{item.value}}" bindtap="selectMeat">{{item.label}}</view>
+      </view>
+    </view>
+
+    <button class="primary-btn" bindtap="randomCombo" disabled="{{loading}}">
+      <view wx:if="{{!loading}}">🎲 随机一餐</view>
+      <view wx:else class="loading-row">
+        <view class="spinner"></view>
+        <text>搭配中...</text>
+      </view>
+    </button>
+
+    <view wx:if="{{showResult}}" class="combo-result">
+      <view class="combo-header">
+        <text class="combo-title">🎉 今日推荐搭配</text>
+        <text class="combo-sub">{{selectedPeople}}人用餐 · 共 {{comboResult.length}} 道 · 合计 ¥{{totalPrice}}</text>
+      </view>
+      <view wx:for="{{comboResult}}" wx:key="id" class="combo-dish">
+        <view class="combo-emoji">{{item.emoji}}</view>
+        <view class="combo-info">
+          <text class="combo-name">{{item.name}}</text>
+          <text class="combo-cat">{{item.category}}</text>
+        </view>
+        <text class="combo-price">¥{{item.price}}</text>
+      </view>
+      <view class="combo-footer">
+        <button class="retry-btn" bindtap="randomCombo">换一批</button>
+        <button class="add-cart-btn" bindtap="comboAddToCart">加入购物车</button>
+      </view>
+    </view>
+  </view>
+</view>

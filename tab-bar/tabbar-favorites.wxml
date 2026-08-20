@@ -1,0 +1,7 @@
+<!-- pages/favorites/favorites.tabbar.wxml -->
+<view class="tab-bar">
+  <view class="tab-item" bindtap="goTab" data-idx="0"><image class="tab-icon" src="/images/tab-menu.png" mode="aspectFit" /><text class="tab-text">菜单</text></view>
+  <view class="tab-item" bindtap="goTab" data-idx="1"><image class="tab-icon" src="/images/tab-random.png" mode="aspectFit" /><text class="tab-text">组菜</text></view>
+  <view class="tab-item is-active"><image class="tab-icon" src="/images/tab-fav-active.png" mode="aspectFit" /><text class="tab-text is-active">收藏</text></view>
+  <view class="tab-item" bindtap="goTab" data-idx="3"><image class="tab-icon" src="/images/tab-profile.png" mode="aspectFit" /><text class="tab-text">我的</text></view>
+</view>

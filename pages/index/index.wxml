@@ -1,0 +1,44 @@
+<!-- pages/index/index.wxml -->
+<view class="page">
+  <view class="header">
+    <view class="header-left">
+      <text class="title">家宴菜单</text>
+      <text class="subtitle">今日推荐 · 用心做好每一道菜</text>
+    </view>
+    <button class="random-btn" bindtap="goToRandom">随机组菜</button>
+  </view>
+
+  <scroll-view class="filter-bar" scroll-x enable-flex>
+    <view wx:for="{{categories}}" wx:key="key" class="filter-chip {{activeCategory === item.key ? 'active' : ''}}" data-key="{{item.key}}" bindtap="selectCategory">{{item.name}}</view>
+  </scroll-view>
+
+  <view class="stat-row">
+    <text class="stat-label">推荐菜品</text>
+    <text class="stat-count">共 {{count}} 道</text>
+  </view>
+
+  <view class="dish-grid">
+    <view wx:for="{{filteredDishes}}" wx:key="id" class="dish-card">
+      <view class="dish-card-inner">
+        <view class="dish-img" wx:if="{{item.image}}">
+          <image src="{{item.image}}" mode="aspectFill" />
+        </view>
+        <view class="dish-img" wx:else>{{item.emoji}}</view>
+        <view class="fav-icon {{item.favorite ? 'active' : ''}}" bindtap="toggleFav" data-id="{{item.id}}">
+          <text>{{item.favorite ? '❤️' : '🤍'}}</text>
+        </view>
+      </view>
+      <view class="dish-info">
+        <text class="dish-name">{{item.name}}</text>
+        <view class="dish-bottom">
+          <text class="dish-price">¥{{item.price}}</text>
+          <view class="add-btn" bindtap="addToCart" data-id="{{item.id}}">＋点单</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{filteredDishes.length === 0}}" class="empty-state">
+    <text class="empty-text">该分类暂无菜品</text>
+  </view>
+</view>

@@ -1,0 +1,23 @@
+<!-- custom-tab-bar/index.wxml -->
+<view class="tab-bar">
+  <view class="tab-item {{idx === 0 ? 'is-active' : ''}}" data-index="0" bindtap="switchTab">
+    <image class="tab-icon" src="/images/tab-menu.png" mode="aspectFit" wx:if="{{idx !== 0}}" />
+    <image class="tab-icon" src="/images/tab-menu-active.png" mode="aspectFit" wx:elif="{{idx === 0}}" />
+    <text class="tab-text {{idx === 0 ? 'is-active' : ''}}">菜单</text>
+  </view>
+  <view class="tab-item {{idx === 1 ? 'is-active' : ''}}" data-index="1" bindtap="switchTab">
+    <image class="tab-icon" src="/images/tab-random.png" mode="aspectFit" wx:if="{{idx !== 1}}" />
+    <image class="tab-icon" src="/images/tab-random-active.png" mode="aspectFit" wx:elif="{{idx === 1}}" />
+    <text class="tab-text {{idx === 1 ? 'is-active' : ''}}">组菜</text>
+  </view>
+  <view class="tab-item {{idx === 2 ? 'is-active' : ''}}" data-index="2" bindtap="switchTab">
+    <image class="tab-icon" src="/images/tab-fav.png" mode="aspectFit" wx:if="{{idx !== 2}}" />
+    <image class="tab-icon" src="/images/tab-fav-active.png" mode="aspectFit" wx:elif="{{idx === 2}}" />
+    <text class="tab-text {{idx === 2 ? 'is-active' : ''}}">收藏</text>
+  </view>
+  <view class="tab-item {{idx === 3 ? 'is-active' : ''}}" data-index="3" bindtap="switchTab">
+    <image class="tab-icon" src="/images/tab-profile.png" mode="aspectFit" wx:if="{{idx !== 3}}" />
+    <image class="tab-icon" src="/images/tab-profile-active.png" mode="aspectFit" wx:elif="{{idx === 3}}" />
+    <text class="tab-text {{idx === 3 ? 'is-active' : ''}}">我的</text>
+  </view>
+</view>

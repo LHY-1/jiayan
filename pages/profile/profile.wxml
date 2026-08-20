@@ -1,0 +1,57 @@
+<!-- pages/profile/profile.wxml -->
+<view class="page">
+  <view class="header">
+    <text class="title">我的</text>
+    <text class="subtitle">个人偏好与设置</text>
+  </view>
+
+  <view class="content">
+    <view class="family-card">
+      <view class="family-avatar">👨‍👩‍👧‍👦</view>
+      <view class="family-info">
+        <text class="family-name">家宴 · 家庭版</text>
+        <text class="family-meta">4 位成员 · 已创建 3 周</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-label">口味偏好设置</text>
+      <view class="settings-card">
+        <view class="setting-row" bindtap="toggleSetting" data-key="noSpicy">
+          <text class="setting-label">不吃辣</text>
+          <switch checked="{{noSpicy}}" color="#c73e3a" data-key="noSpicy" bindchange="toggleSetting" />
+        </view>
+        <view class="setting-row" bindtap="toggleSetting" data-key="noSeafood">
+          <text class="setting-label">忌海鲜</text>
+          <switch checked="{{noSeafood}}" color="#c73e3a" data-key="noSeafood" bindchange="toggleSetting" />
+        </view>
+        <view class="setting-row" bindtap="toggleSetting" data-key="vegetarian">
+          <text class="setting-label">素食偏好</text>
+          <switch checked="{{vegetarian}}" color="#c73e3a" data-key="vegetarian" bindchange="toggleSetting" />
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-label">常用设置</text>
+      <view class="settings-card">
+        <view class="menu-row" bindtap="goToManage">
+          <text>菜品管理</text>
+          <text class="menu-arrow">管理菜单 ›</text>
+        </view>
+        <view class="menu-row" bindtap="goToNotifications">
+          <text>通知中心</text>
+          <text class="menu-arrow">查看通知 ›</text>
+        </view>
+        <view class="menu-row" bindtap="goToHistory">
+          <text>订单记录</text>
+          <text class="menu-arrow">查看订单 ›</text>
+        </view>
+        <view class="menu-row" bindtap="goToAbout">
+          <text>关于家宴</text>
+          <text class="menu-arrow">V1.0 ›</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

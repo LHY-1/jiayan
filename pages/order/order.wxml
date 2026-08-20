@@ -1,0 +1,108 @@
+<!-- pages/order/order.wxml -->
+<view class="page">
+  <!-- 角色切换 -->
+  <view class="role-switch" bindtap="switchRole">
+    <text>{{role === 'orderer' ? '👨‍🍳 切到厨师' : '👤 切回下单'}}</text>
+  </view>
+
+  <!-- ========== 下单人视图 ========== -->
+  <view wx:if="{{role === 'orderer'}}">
+    <view class="header">
+      <text class="title">购物车</text>
+      <text class="subtitle">已选 {{totalQty}} 道菜</text>
+      <view class="header-actions">
+        <text class="action-btn" bindtap="clearCart" wx:if="{{cart.length > 0}}">清空</text>
+        <text class="action-btn" bindtap="viewHistory">历史订单</text>
+      </view>
+    </view>
+
+    <view wx:if="{{cart.length > 0}}" class="cart-list">
+      <view wx:for="{{cart}}" wx:key="id" class="cart-item">
+        <view class="cart-img">
+          <image wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" />
+          <text wx:else>{{item.emoji}}</text>
+        </view>
+        <view class="cart-info">
+          <text class="cart-name">{{item.name}}</text>
+          <text class="cart-price">¥{{item.price}}/份</text>
+        </view>
+        <view class="qty-control">
+          <view class="qty-btn minus" bindtap="decrease" data-id="{{item.id}}">−</view>
+          <text class="qty-num">{{item.qty}}</text>
+          <view class="qty-btn plus" bindtap="increase" data-id="{{item.id}}">+</view>
+          <text class="qty-subtotal">¥{{item.subtotal}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="empty-state">
+      <text class="empty-emoji">🛒</text>
+      <text class="empty-title">购物车还是空的</text>
+      <text class="empty-desc">去菜单里选几道菜吧</text>
+      <button class="menu-btn" bindtap="goToMenu">去选菜</button>
+    </view>
+
+    <view wx:if="{{cart.length > 0}}" class="cart-footer">
+      <view class="footer-left">
+        <text class="footer-qty">共 {{totalQty}} 道</text>
+        <text class="footer-total">合计 ¥{{total}}</text>
+      </view>
+      <button class="submit-btn" bindtap="submitOrder">提交点单</button>
+      <text class="cloud-status" wx:if="{{cloudSyncStatus}}">{{cloudSyncStatus}}</text>
+      <text class="cloud-status" wx:if="{{role === 'chef'}}" bindtap="refreshCloudOrders">🔄 刷新</text>
+    </view>
+  </view>
+
+  <!-- ========== 厨师视图 ========== -->
+  <view wx:if="{{role === 'chef'}}">
+    <view class="header">
+      <text class="title">👨‍🍳 厨师工作台</text>
+      <text class="subtitle">{{cloudStatus}}</text>
+    </view>
+
+    <view class="chef-confirm-bar" bindtap="confirmChef">
+      <text class="chef-confirm-text">👨‍🍳 我是厨师，确认身份</text>
+      <text class="chef-confirm-hint" wx:if="{{chefConfirmed}}">✅ 已确认（唯一厨师）</text>
+    </view>
+    <view wx:if="{{chefConfirmed}}" class="chef-cancel-bar" bindtap="cancelChef">
+      <text class="chef-cancel-text">❌ 取消厨师身份</text>
+    </view>
+    <view wx:if="{{!chefConfirmed}}" class="unconfirmed-tip">
+      <text class="unconfirmed-text">点击确认成为唯一厨师</text>
+    </view>
+    <view class="refresh-bar" bindtap="refreshCloudOrders">
+      <text class="refresh-text">🔄 刷新云端订单</text>
+      <text class="refresh-hint">点击同步最新订单</text>
+    </view>
+    <!-- 调试按钮：强制测试云端同步 -->
+    <view class="debug-bar" bindtap="testCloudSync">
+      <text class="debug-text">🔧 测试云端同步</text>
+      <text class="debug-hint">点击测试电脑是否可访问云端</text>
+    </view>
+    <view wx:if="{{pendingOrders.length > 0 && chefConfirmed}}" class="chef-order-list">
+      <!-- 每道菜一个卡片 -->
+      <view wx:for="{{pendingOrders}}" wx:key="id" wx:for-item="order">
+        <view wx:for="{{order.items}}" wx:key="id" wx:for-item="dish" class="chef-dish-card">
+          <view class="chef-dish-header">
+            <text class="chef-dish-name">{{dish.name}}</text>
+            <text class="chef-dish-qty" wx:if="{{dish.qty > 1}}">×{{dish.qty}}</text>
+            <text class="chef-order-status {{order.status==='已完成'?'done':order.status==='烹饪中'?'cooking':'pending'}}">{{order.status}}</text>
+          </view>
+          <view class="chef-dish-time">{{order.timeStr}}</view>
+          <view class="chef-actions">
+            <button wx:if="{{order.status==='已下单'}}" class="chef-btn cooking" bindtap="startCooking" data-id="{{order.id}}">👨‍🍳 开始做</button>
+            <button wx:if="{{order.status==='烹饪中'}}" class="chef-btn done" bindtap="finishCooking" data-id="{{order.id}}">✅ 完成</button>
+            <text wx:if="{{order.status==='已完成'}}" class="chef-done-label">🍽️ 已出餐</text>
+            <button class="chef-btn delete" bindtap="deleteOrder" data-id="{{order.id}}">🗑️ 删除</button>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="empty-state">
+      <text class="empty-emoji">🧑‍🍳</text>
+      <text class="empty-title">没有待处理订单</text>
+      <text class="empty-desc">目前没有新的点单，休息一下吧</text>
+    </view>
+  </view>
+</view>

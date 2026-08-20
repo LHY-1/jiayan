@@ -1,0 +1,35 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/random/random",
+    "pages/favorites/favorites",
+    "pages/order/order",
+    "pages/profile/profile",
+    "pages/manage/manage",
+    "pages/history/history",
+    "pages/notifications/notifications"
+  ],
+  "window": {
+    "navigationBarTitleText": "家宴",
+    "navigationBarTextStyle": "white",
+    "navigationBarBackgroundColor": "#c73e3a",
+    "backgroundColor": "#faf6f0",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#8a7e6e",
+    "selectedColor": "#c73e3a",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {"pagePath": "pages/index/index", "iconPath": "images/tab-menu.png", "selectedIconPath": "images/tab-menu-active.png", "text": "菜单"},
+      {"pagePath": "pages/random/random", "iconPath": "images/tab-random.png", "selectedIconPath": "images/tab-random-active.png", "text": "组菜"},
+      {"pagePath": "pages/favorites/favorites", "iconPath": "images/tab-fav.png", "selectedIconPath": "images/tab-fav-active.png", "text": "收藏"},
+      {"pagePath": "pages/order/order", "iconPath": "images/tab-cart.png", "selectedIconPath": "images/tab-cart-active.png", "text": "购物车"},
+      {"pagePath": "pages/profile/profile", "iconPath": "images/tab-profile.png", "selectedIconPath": "images/tab-profile-active.png", "text": "我的"}
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}
