@@ -52,7 +52,7 @@ Page({
     wx.navigateTo({ url: '/pages/notifications/notifications' });
   },
 
-  // 订阅消息授权（微信订阅是一次性的，需要定期重新授权才能持续收到通知）
+  // 订阅消息授权（勾选「总是保持以上选择」后，授权一次长期有效，每次下单自动续额）
   subscribeNotify() {
     const SUBMIT_TEMPLATE_ID = 'Q5yDGEZM1o23liVkmMLZ4sltKDSop3tukazyfy21yBc';
     const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc';
@@ -67,7 +67,12 @@ Page({
         if (res[SUBMIT_TEMPLATE_ID] === 'accept') granted++;
         if (res[FINISH_TEMPLATE_ID] === 'accept') granted++;
         if (granted > 0) {
-          wx.showToast({ title: `已授权 ${granted} 个通知`, icon: 'success' });
+          wx.setStorageSync('_notify_subscribed', true);
+          wx.showModal({
+            title: '✅ 通知已开启',
+            content: '已授权做菜进度通知。\n\n💡 提示：授权弹窗里勾选「总是保持以上选择，不再询问」后，以后每次下单都会自动授权，长期有效，不用重复操作。',
+            showCancel: false
+          });
         } else {
           wx.showToast({ title: '未授权任何通知', icon: 'none' });
         }

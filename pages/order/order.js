@@ -98,8 +98,10 @@ Page({
           if (res[SUBMIT_TEMPLATE_ID] === 'accept') {
             wx.setStorageSync('_chef_subscribed', true)
             console.log('[推送] 厨师已授权新订单通知')
+            wx.showToast({ title: '✅ 已授权，可收到新订单通知', icon: 'none' })
           } else {
             console.log('[推送] 厨师未授权新订单通知')
+            wx.showToast({ title: '未授权通知，可在「我的→消息订阅」开启', icon: 'none', duration: 2500 })
           }
         },
         fail: (err) => console.error('[推送] 订阅失败', err)
@@ -247,7 +249,16 @@ Page({
       success: (res) => {
         this.submitting = false
         this._completeOrder(app, openid)
-        if (res[SUBMIT_TEMPLATE_ID] === 'accept') {
+        const subOk = res[SUBMIT_TEMPLATE_ID] === 'accept'
+        const finOk = res[FINISH_TEMPLATE_ID] === 'accept'
+        if (subOk || finOk) {
+          wx.setStorageSync('_notify_subscribed', true)
+          // 勾选「总是保持以上选择」后，每次下单都会静默自动授权，通知长期有效
+          wx.showToast({ title: '🔔 通知已开启，做菜进度会提醒你', icon: 'none', duration: 2500 })
+        } else {
+          wx.showToast({ title: '未开启微信通知，可在「我的→消息订阅」开启', icon: 'none', duration: 2500 })
+        }
+        if (subOk) {
           // 从云端获取厨师 openid（下单者设备本地没有这个值）
           this._fetchChefOpenid().then(chefOpenid => {
             if (chefOpenid) {
@@ -271,7 +282,7 @@ Page({
             }
           })
         }
-        if (res[FINISH_TEMPLATE_ID] === 'accept') wx.setStorageSync('_finish_subscribed', true)
+        if (finOk) wx.setStorageSync('_finish_subscribed', true)
       },
       fail: (err) => {
         this.submitting = false
@@ -523,8 +534,22 @@ Page({
       method: 'POST',
       header: { 'Content-Type': 'application/json' },
       data: payload,
-      success: (res) => console.log('[推送] 菜品通知', dish.name, res.data),
-      fail: (err) => console.error('[推送] 失败', err)
+      success: (res) => {
+        console.log('[推送] 菜品通知', dish.name, res.data)
+        // 推送失败：大概率是订阅授权额度用完（43101），本地记录提示
+        if (res.data && res.data.code !== 0) {
+          const msg = res.data.msg || '推送失败'
+          if (msg.indexOf('43101') > -1 || msg.indexOf('未订阅') > -1 || msg.indexOf('user refuse') > -1) {
+            this._addNotification('下单者', '⚠️ 微信通知未开启', '厨师已操作，但你未授权微信通知。请到「我的 → 消息订阅授权」开启，即可收到做菜进度', dish.orderId, 'subscribe_hint')
+          } else {
+            this._addNotification('下单者', '⚠️ 推送失败', msg, dish.orderId, 'push_fail')
+          }
+        }
+      },
+      fail: (err) => {
+        console.error('[推送] 失败', err)
+        this._addNotification('下单者', '⚠️ 推送失败', '网络异常，请稍后在「我的 → 消息订阅授权」重新授权', dish.orderId, 'push_fail')
+      }
     })
   },
 
