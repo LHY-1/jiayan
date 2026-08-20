@@ -88,119 +88,49 @@ Page({
     this.setData({ filteredDishes: filtered, filteredCount: filtered.length })
   },
 
-  // 图片上传：自动缩放 + 压缩转 base64，大照片也能直接传，无需手动编辑
-  // 策略：先缩到 1080px 宽，超限自动降到 720→540，保证清晰且体积可控
+  // 图片上传：逐级降质压缩 + 转 base64，保留原始比例（无 canvas 无 EXIF 问题）
   onChooseImage() {
     wx.chooseMedia({
       count: 1, mediaType: ['image'], sizeType: ['compressed'],
       success: (res) => {
         const tempPath = res.tempFiles[0].tempFilePath
         wx.showLoading({ title: '处理图片...' })
-        this._processImage(tempPath, 0)
+        this._compressStep(tempPath, 0)
       }
     })
   },
 
-  // 逐级缩放直到体积达标（含 EXIF 方向修正，避免横竖颠倒）
-  _processImage(src, attempt) {
-    const sizes = [1080, 720, 540]
-    const maxW = sizes[attempt] !== undefined ? sizes[attempt] : 540
-    const done = (dataUrl) => {
-      wx.hideLoading()
-      if (dataUrl) {
-        this.setData({ 'form.image': dataUrl })
-        wx.showToast({ title: '图片已就绪', icon: 'success' })
-      } else {
-        this._fallbackCompress(src)
-      }
-    }
-    wx.getImageInfo({
-      src,
-      success: (info) => {
-        const { width, height, orientation } = info
-        if (!width || !height) { done(''); return }
-        // EXIF 方向修正：left/right 表示照片需要旋转 90°，宽高互换
-        const needRotate = orientation === 'left' || orientation === 'right'
-        const baseW = needRotate ? height : width
-        const baseH = needRotate ? width : height
-        let targetW = baseW
-        let targetH = baseH
-        if (baseW > maxW) {
-          targetW = maxW
-          targetH = Math.max(1, Math.round(maxW * baseH / baseW))
-        }
-        // 用离屏 canvas 缩放
-        try {
-          const canvas = wx.createOffscreenCanvas({ type: '2d', width: targetW, height: targetH })
-          const ctx = canvas.getContext('2d')
-          const img = canvas.createImage()
-          img.onload = () => {
-            try {
-              if (needRotate) {
-                // 旋转绘制：以中心为原点，旋转后填满画布
-                ctx.translate(targetW / 2, targetH / 2)
-                ctx.rotate(orientation === 'right' ? Math.PI / 2 : -Math.PI / 2)
-                const scale = targetW / height
-                ctx.drawImage(img, -width * scale / 2, -height * scale / 2, width * scale, height * scale)
-              } else {
-                ctx.drawImage(img, 0, 0, targetW, targetH)
-              }
-              let dataUrl = ''
-              try {
-                dataUrl = canvas.toDataURL('image/jpeg', 0.78)
-              } catch (e) {
-                dataUrl = ''
-              }
-              if (dataUrl && dataUrl.length > 400 * 1024 && attempt < sizes.length - 1) {
-                // 还大，继续缩小一档
-                this._processImage(src, attempt + 1)
-                return
-              }
-              done(dataUrl || '')
-            } catch (err) {
-              done('')
-            }
-          }
-          img.onerror = () => done('')
-          img.src = src
-        } catch (err) {
-          done('')
-        }
-      },
-      fail: () => done('')
-    })
-  },
-
-  // 降级方案：不支持 canvas 时用纯质量压缩
-  _fallbackCompress(src) {
+  // 逐级降质：80 -> 70 -> 60 -> 50，直到体积达标
+  _compressStep(src, attempt) {
+    const qualities = [80, 70, 60, 50]
+    const quality = qualities[attempt] !== undefined ? qualities[attempt] : 50
     wx.compressImage({
       src,
-      quality: 60,
+      quality,
       success: (cr) => {
         const compressedPath = cr.tempFilePath || src
         wx.getFileSystemManager().readFile({
           filePath: compressedPath,
           encoding: 'base64',
           success: (fr) => {
-            wx.hideLoading()
             const b64 = fr.data
+            if (b64.length > 400 * 1024 && attempt < qualities.length - 1) {
+              // 还大，继续降质
+              this._compressStep(src, attempt + 1)
+              return
+            }
+            wx.hideLoading()
             if (b64.length > 400 * 1024) {
-              wx.showToast({ title: '照片较大，可先在相册里裁剪一下', icon: 'none', duration: 2500 })
+              wx.showToast({ title: '照片较大，可先在相册里裁剪一下再上传', icon: 'none', duration: 2500 })
               return
             }
             this.setData({ 'form.image': 'data:image/jpeg;base64,' + b64 })
             wx.showToast({ title: '图片已就绪', icon: 'success' })
           },
-          fail: () => {
-            wx.hideLoading()
-            wx.showToast({ title: '图片处理失败', icon: 'none' })
-          }
+          fail: () => { wx.hideLoading(); wx.showToast({ title: '图片处理失败', icon: 'none' }) }
         })
       },
-      fail: () => {
-        wx.hideLoading()
-        wx.showToast({ title: '图片压缩失败', icon: 'none' })
-      }
+      fail: () => { wx.hideLoading(); wx.showToast({ title: '图片压缩失败', icon: 'none' }) }
     })
   },
 
