@@ -89,6 +89,7 @@ Page({
   },
 
   // 图片上传：压缩后转 base64，保证云端同步后全家人可见
+  // 质量 80 保证清晰；单张限 400KB；总量限 900KB（微信本地存储单 key 上限 1MB）
   onChooseImage() {
     wx.chooseMedia({
       count: 1, mediaType: ['image'], sizeType: ['compressed'],
@@ -98,7 +99,7 @@ Page({
         // 先压缩
         wx.compressImage({
           src: tempPath,
-          quality: 50,
+          quality: 80,
           success: (cr) => {
             const compressedPath = cr.tempFilePath || tempPath
             // 转 base64
@@ -108,8 +109,8 @@ Page({
               success: (fr) => {
                 wx.hideLoading()
                 const b64 = fr.data
-                if (b64.length > 250 * 1024) {
-                  wx.showToast({ title: '图片太大，请换一张', icon: 'none' })
+                if (b64.length > 400 * 1024) {
+                  wx.showToast({ title: '图片较大，建议选更小的照片', icon: 'none' })
                   return
                 }
                 this.setData({ 'form.image': 'data:image/jpeg;base64,' + b64 })
@@ -128,6 +129,18 @@ Page({
         })
       }
     })
+  },
+
+  // 统计当前所有菜品 base64 图片总大小（字节），超限会存不进本地
+  _totalImageBytes() {
+    const merged = this._mergeAllDishes()
+    let total = 0
+    merged.forEach(d => {
+      if (d.image && d.image.indexOf('data:') === 0) {
+        total += d.image.length
+      }
+    })
+    return total
   },
 
   onPreviewImage() {
@@ -200,6 +213,13 @@ Page({
     const { form, editId } = this.data
     if (!form.name || !form.price) {
       wx.showToast({ title: '请填写名称和价格', icon: 'none' })
+      return
+    }
+
+    // 总量保护：图片 base64 总和超 900KB 会存不进本地（单 key 上限 1MB）
+    const totalBytes = this._totalImageBytes() + (form.image && form.image.indexOf('data:') === 0 ? form.image.length : 0)
+    if (totalBytes > 900 * 1024) {
+      wx.showToast({ title: '菜品图片总体积过大，建议删除部分菜品图片', icon: 'none', duration: 2500 })
       return
     }
 
