@@ -1,9 +1,10 @@
 /**
- * Cloudflare Worker：微信订阅消息推送
- *
+ * Cloudflare Worker：微信订阅消息推送 + 订单云端同步 + 厨师身份管理
+ * 
+ * 自动部署到 jiayan-notify
  * 环境变量（Settings → Variables）：
  *   APPID      = wxbc65e40b13a9de88
- *   APPSECRET  = 0b7770…52ca
+ *   APPSECRET  = 你的小程序 appSecret
  */
 
 export default {
@@ -12,11 +13,12 @@ export default {
       return new Response(null, { headers: corsHeaders() })
     }
     const url = new URL(request.url)
+
     // POST /decode — 用 code 换 openid
     if (request.method === 'POST' && url.pathname === '/decode') {
       return handleDecode(request, env)
     }
-    // POST /order — 上传订单
+    // POST /order — 上传/更新订单
     if (request.method === 'POST' && url.pathname === '/order') {
       return handleUploadOrder(request, env)
     }
@@ -36,26 +38,24 @@ export default {
     if (request.method === 'GET' && url.pathname === '/chef') {
       return handleGetChef(env)
     }
-    if (request.method !== 'POST' || url.pathname !== '/push') {
-      return jsonResponse({ code: 404, msg: 'Not Found' }, 404)
+    // POST /push — 推送订阅消息
+    if (request.method === 'POST' && url.pathname === '/push') {
+      return handlePush(request, env)
     }
-    let body
-    try { body = await request.json() } catch {
-      return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400)
-    }
-    const { openid, templateId, items, total, orderTime } = body
-    if (!openid || !templateId) {
-      return jsonResponse({ code: 400, msg: '缺少 openid 或 templateId' }, 400)
-    }
-    try {
-      const result = await sendSubscribeMessage(env, { openid, templateId, items, total, orderTime, page: 'pages/order/order' })
-      return jsonResponse(result)
-    } catch (err) {
-      return jsonResponse({ code: -1, msg: err.message }, 500)
-    }
+    return jsonResponse({ code: 404, msg: 'Not Found' }, 404)
   }
 }
 
+// ==================== 常量 ====================
+
+const SUBMIT_TEMPLATE_ID = 'Q5yDGEZM1o23liVkmMLZ4sltKDSop3tukazyfy21yBc'
+const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc'
+const ORDERS_KV_KEY = 'orders'
+const CHEF_KV_KEY = 'chef_openid'
+
+// ==================== 路由处理 ====================
+
+// 用 code 换 openid
 async function handleDecode(request, env) {
   let body
   try { body = await request.json() } catch { return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400) }
@@ -73,31 +73,7 @@ async function handleDecode(request, env) {
   }
 }
 
-const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc'
-
-// 订单 KV 键名（所有订单列表）
-const ORDERS_KV_KEY = 'all_orders'
-// 厨师身份 KV 键名
-const CHEF_KV_KEY = 'chef_openid'
-
-async function sendSubscribeMessage(env, params) {
-  const { openid, templateId, items, total, orderTime, page } = params
-  const { access_token } = await getAccessToken(env)
-  const data = templateId === FINISH_TEMPLATE_ID
-    ? buildFinishMessageData(items)
-    : buildSubmitMessageData(items, orderTime)
-  const res = await fetch(
-    `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${access_token}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ touser: openid, template_id: templateId, page, data }) }
-  )
-  const result = await res.json()
-  if (result.errcode && result.errcode !== 0) {
-    throw new Error(`微信API错误: ${result.errmsg} (code=${result.errcode})`)
-  }
-  return { code: 0, msg: 'success' }
-}
-
-// 上传订单到云端
+// 上传/更新订单
 async function handleUploadOrder(request, env) {
   let body
   try { body = await request.json() } catch { return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400) }
@@ -106,24 +82,22 @@ async function handleUploadOrder(request, env) {
 
   const raw = await env.ORDERS_KV.get(ORDERS_KV_KEY)
   let orders = raw ? JSON.parse(raw) : []
-  // 更新或插入
   const idx = orders.findIndex(o => o.id === order.id)
   if (idx >= 0) { orders[idx] = order }
   else { orders.unshift(order) }
-  // 保留最近100条
   if (orders.length > 100) orders = orders.slice(0, 100)
   await env.ORDERS_KV.put(ORDERS_KV_KEY, JSON.stringify(orders), { expirationTtl: 86400 * 7 })
   return jsonResponse({ code: 0 })
 }
 
-// 拉取云端订单
+// 拉取所有订单
 async function handleFetchOrders(env) {
   const raw = await env.ORDERS_KV.get(ORDERS_KV_KEY)
   const orders = raw ? JSON.parse(raw) : []
   return jsonResponse({ code: 0, orders })
 }
 
-// 删除云端订单
+// 删除订单
 async function handleDeleteOrder(request, env) {
   const url = new URL(request.url)
   const orderId = url.searchParams.get('id')
@@ -139,9 +113,7 @@ async function handleDeleteOrder(request, env) {
 // 管理厨师身份（唯一厨师）
 async function handleChef(request, env) {
   let body
-  try { body = await request.json() } catch {
-    return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400)
-  }
+  try { body = await request.json() } catch { return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400) }
   const { action, openid } = body
   if (action === 'set' && openid) {
     await env.CHEF_KV.put(CHEF_KV_KEY, openid, { expirationTtl: 86400 * 7 })
@@ -154,25 +126,81 @@ async function handleChef(request, env) {
   return jsonResponse({ code: 400, msg: 'Invalid action' }, 400)
 }
 
-// 获取当前云端厨师openid
+// 获取当前厨师 openid
 async function handleGetChef(env) {
   const openid = await env.CHEF_KV.get(CHEF_KV_KEY)
   return jsonResponse({ code: 0, chefOpenid: openid || '' })
 }
 
-function buildSubmitMessageData(items, orderTime) {
-  const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
-  return { thing5: { value: itemStr }, time1: { value: formatTime(orderTime) }, thing4: { value: '原' } }
+// 推送订阅消息
+async function handlePush(request, env) {
+  let body
+  try { body = await request.json() } catch { return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400) }
+  const { openid, templateId, items, total, orderTime } = body
+  if (!openid || !templateId) {
+    return jsonResponse({ code: 400, msg: '缺少 openid 或 templateId' }, 400)
+  }
+  try {
+    const result = await sendSubscribeMessage(env, {
+      openid, templateId, items: items || [], total: total || 0,
+      orderTime: orderTime || new Date().toISOString(),
+      page: 'pages/order/order'
+    })
+    return jsonResponse(result)
+  } catch (err) {
+    return jsonResponse({ code: -1, msg: err.message }, 500)
+  }
 }
 
-function buildFinishMessageData(items) {
-  const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
-  return { thing4: { value: itemStr }, time1: { value: formatTime(new Date().toISOString()) }, thing3: { value: '厨师' } }
+// ==================== 核心逻辑 ====================
+
+async function sendSubscribeMessage(env, params) {
+  const { openid, templateId, items, total, orderTime, page } = params
+  const { access_token } = await getAccessToken(env)
+  const data = templateId === FINISH_TEMPLATE_ID
+    ? buildFinishMessageData(items, total, orderTime)
+    : buildSubmitMessageData(items, total, orderTime)
+  const res = await fetch(
+    `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${access_token}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ touser: openid, template_id: templateId, page, data }) }
+  )
+  const result = await res.json()
+  if (result.errcode && result.errcode !== 0) {
+    throw new Error(`微信API错误: ${result.errmsg} (code=${result.errcode})`)
+  }
+  return { code: 0, msg: 'success' }
+}
+
+// 下单通知模板：菜品名称(thing5)、下单时间(time1)、下单用户(thing4)
+function buildSubmitMessageData(items, total, orderTime) {
+  const itemStr = items.length > 0
+    ? items.map(i => `${i.name || i}×${i.qty || 1}`).join('、')
+    : '已下单'
+  return {
+    thing5: { value: itemStr },
+    time1:  { value: formatTime(orderTime) },
+    thing4: { value: '原' }
+  }
+}
+
+// 完成通知模板：菜品名称(thing4)、完成时间(time1)、完成用户(thing3)
+function buildFinishMessageData(items, total, orderTime) {
+  const itemStr = items.length > 0
+    ? items.map(i => `${i.name || i}×${i.qty || 1}`).join('、')
+    : '已下单'
+  return {
+    thing4: { value: itemStr },
+    time1:  { value: formatTime(orderTime || new Date().toISOString()) },
+    thing3: { value: '厨师' }
+  }
 }
 
 async function getAccessToken(env) {
   if (!env.APPID || !env.APPSECRET) throw new Error('请设置环境变量 APPID 和 APPSECRET')
-  const res = await fetch(`https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${env.APPID}&secret=${env.APPSECRET}`)
+  const res = await fetch(
+    `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${env.APPID}&secret=${env.APPSECRET}`
+  )
   const data = await res.json()
   if (data.errcode) throw new Error(`获取token失败: ${data.errmsg}`)
   return { access_token: data.access_token }
@@ -185,10 +213,18 @@ function formatTime(isoStr) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+// ==================== 工具函数 ====================
+
 function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...corsHeaders() } })
+  return new Response(JSON.stringify(data), {
+    status, headers: { 'Content-Type': 'application/json', ...corsHeaders() }
+  })
 }
 
 function corsHeaders() {
-  return { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' }
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  }
 }

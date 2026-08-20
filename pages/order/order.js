@@ -8,7 +8,9 @@ let _refreshTimer = null
 Page({
   data: {
     cart: [], total: 0, totalQty: 0,
-    role: 'orderer', pendingOrders: [], chefOpenid: '', chefConfirmed: false
+    cart: [], total: 0, totalQty: 0,
+    role: 'orderer', pendingOrders: [], chefOpenid: '', chefConfirmed: false,
+    cloudSyncStatus: '', cloudStatus: ''
   },
 
   onLoad() {
@@ -499,6 +501,26 @@ Page({
           resolve(true)
         }
       })
+    })
+  },
+
+  // 测试云端同步
+  testCloudSync() {
+    wx.showLoading({ title: '测试中...' })
+    this.setData({ cloudSyncStatus: '测试中...' })
+    this._fetchOrdersFromCloud().then(orders => {
+      wx.hideLoading()
+      if (orders.length > 0) {
+        this.setData({ cloudSyncStatus: `✅ 成功，云端 ${orders.length} 条订单` })
+        wx.showToast({ title: `云端 ${orders.length} 条订单`, icon: 'success' })
+      } else {
+        this.setData({ cloudSyncStatus: '✅ 连接成功，云端暂无订单' })
+        wx.showToast({ title: '连接成功，暂无订单', icon: 'none' })
+      }
+    }).catch(() => {
+      wx.hideLoading()
+      this.setData({ cloudSyncStatus: '❌ 连接失败，请检查 Worker 地址' })
+      wx.showToast({ title: '连接失败', icon: 'none' })
     })
   },
 
