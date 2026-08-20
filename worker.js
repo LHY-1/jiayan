@@ -28,6 +28,14 @@ export default {
     if (request.method === 'GET' && url.pathname === '/orders') {
       return handleFetchOrders(env)
     }
+    // POST /chef — 管理厨师身份
+    if (request.method === 'POST' && url.pathname === '/chef') {
+      return handleChef(request, env)
+    }
+    // GET /chef — 获取当前厨师openid
+    if (request.method === 'GET' && url.pathname === '/chef') {
+      return handleGetChef(env)
+    }
     if (request.method !== 'POST' || url.pathname !== '/push') {
       return jsonResponse({ code: 404, msg: 'Not Found' }, 404)
     }
@@ -126,14 +134,36 @@ async function handleDeleteOrder(request, env) {
   return jsonResponse({ code: 0, msg: '删除成功' })
 }
 
+// 管理厨师身份（唯一厨师）
+async function handleChef(request, env) {
+  let body
+  try { body = await request.json() } catch {
+    return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400)
+  }
+  const { action, openid } = body
+  if (action === 'set' && openid) {
+    await env.CHEF_KV.put(CHEF_KV_KEY, openid, { expirationTtl: 86400 * 7 })
+    return jsonResponse({ code: 0, msg: '厨师身份已更新' })
+  }
+  if (action === 'cancel') {
+    await env.CHEF_KV.delete(CHEF_KV_KEY)
+    return jsonResponse({ code: 0, msg: '厨师身份已清除' })
+  }
+  return jsonResponse({ code: 400, msg: 'Invalid action' }, 400)
+}
+
+// 获取当前云端厨师openid
+async function handleGetChef(env) {
+  const openid = await env.CHEF_KV.get(CHEF_KV_KEY)
+  return jsonResponse({ code: 0, chefOpenid: openid || '' })
+}
+
 function buildSubmitMessageData(items, orderTime) {
-  items = items || []
   const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
   return { thing5: { value: itemStr }, time1: { value: formatTime(orderTime) }, thing4: { value: '原' } }
 }
 
 function buildFinishMessageData(items) {
-  items = items || []
   const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
   return { thing4: { value: itemStr }, time1: { value: formatTime(new Date().toISOString()) }, thing3: { value: '厨师' } }
 }

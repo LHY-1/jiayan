@@ -9,3 +9,7 @@ APPSECRET = "1e44b014ae24321c8f7e39b4c9b1a70b"
 [[kv_namespaces]]
 binding = "ORDERS_KV"
 id = "73b6182354154f3abd5d9ea12b0660d6"
+
+[[kv_namespaces]]
+binding = "CHEF_KV"
+id = "PENDING_CHEF_KV_ID"
