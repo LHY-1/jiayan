@@ -127,11 +127,13 @@ async function handleDeleteOrder(request, env) {
 }
 
 function buildSubmitMessageData(items, orderTime) {
+  items = items || []
   const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
   return { thing5: { value: itemStr }, time1: { value: formatTime(orderTime) }, thing4: { value: '原' } }
 }
 
 function buildFinishMessageData(items) {
+  items = items || []
   const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
   return { thing4: { value: itemStr }, time1: { value: formatTime(new Date().toISOString()) }, thing3: { value: '厨师' } }
 }
