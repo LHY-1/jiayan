@@ -101,7 +101,7 @@ Page({
     })
   },
 
-  // 逐级缩放直到体积达标
+  // 逐级缩放直到体积达标（含 EXIF 方向修正，避免横竖颠倒）
   _processImage(src, attempt) {
     const sizes = [1080, 720, 540]
     const maxW = sizes[attempt] !== undefined ? sizes[attempt] : 540
@@ -117,14 +117,17 @@ Page({
     wx.getImageInfo({
       src,
       success: (info) => {
-        const { width, height } = info
+        const { width, height, orientation } = info
         if (!width || !height) { done(''); return }
-        const ratio = width / height
-        let targetW = width
-        let targetH = height
-        if (width > maxW) {
+        // EXIF 方向修正：left/right 表示照片需要旋转 90°，宽高互换
+        const needRotate = orientation === 'left' || orientation === 'right'
+        const baseW = needRotate ? height : width
+        const baseH = needRotate ? width : height
+        let targetW = baseW
+        let targetH = baseH
+        if (baseW > maxW) {
           targetW = maxW
-          targetH = Math.max(1, Math.round(maxW / ratio))
+          targetH = Math.max(1, Math.round(maxW * baseH / baseW))
         }
         // 用离屏 canvas 缩放
         try {
@@ -133,7 +136,15 @@ Page({
           const img = canvas.createImage()
           img.onload = () => {
             try {
-              ctx.drawImage(img, 0, 0, targetW, targetH)
+              if (needRotate) {
+                // 旋转绘制：以中心为原点，旋转后填满画布
+                ctx.translate(targetW / 2, targetH / 2)
+                ctx.rotate(orientation === 'right' ? Math.PI / 2 : -Math.PI / 2)
+                const scale = targetW / height
+                ctx.drawImage(img, -width * scale / 2, -height * scale / 2, width * scale, height * scale)
+              } else {
+                ctx.drawImage(img, 0, 0, targetW, targetH)
+              }
               let dataUrl = ''
               try {
                 dataUrl = canvas.toDataURL('image/jpeg', 0.78)
