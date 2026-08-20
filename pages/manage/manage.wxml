@@ -85,8 +85,8 @@
         </view>
         <view class="form-group">
           <text class="form-label">分类</text>
-          <picker mode="selector" range="{{filterCategories.slice(1)}}" value="{{form.category}}" bindchange="onCategoryChange">
-            <view class="form-picker">{{form.category}}</view>
+          <picker mode="selector" range="{{categoryOptions}}" range-key="name" value="{{catIndex}}" bindchange="onCategoryChange">
+            <view class="form-picker">{{form.category}} ▾</view>
           </picker>
         </view>
         <view class="form-group">

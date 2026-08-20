@@ -11,6 +11,8 @@ Page({
     editId: null,
     activeCategory: 'all',
     filterCategories: [],
+    categoryOptions: [],
+    catIndex: 0,
     filteredCount: 0,
     form: {
       name: '', price: '', category: '热菜', tag: '', desc: '', image: ''
@@ -39,7 +41,7 @@ Page({
 
   onLoad() {
     const allCats = [{ name: '全部', key: 'all' }, ...categories]
-    this.setData({ filterCategories: allCats })
+    this.setData({ filterCategories: allCats, categoryOptions: categories })
     this.refresh()
   },
 
@@ -86,19 +88,57 @@ Page({
     this.setData({ filteredDishes: filtered, filteredCount: filtered.length })
   },
 
-  // 图片上传
+  // 图片上传：压缩后转 base64，保证云端同步后全家人可见
   onChooseImage() {
     wx.chooseMedia({
-      count: 1, mediaType: ['image'],
+      count: 1, mediaType: ['image'], sizeType: ['compressed'],
       success: (res) => {
-        this.setData({ 'form.image': res.tempFiles[0].tempFilePath })
+        const tempPath = res.tempFiles[0].tempFilePath
+        wx.showLoading({ title: '处理图片...' })
+        // 先压缩
+        wx.compressImage({
+          src: tempPath,
+          quality: 50,
+          success: (cr) => {
+            const compressedPath = cr.tempFilePath || tempPath
+            // 转 base64
+            wx.getFileSystemManager().readFile({
+              filePath: compressedPath,
+              encoding: 'base64',
+              success: (fr) => {
+                wx.hideLoading()
+                const b64 = fr.data
+                if (b64.length > 250 * 1024) {
+                  wx.showToast({ title: '图片太大，请换一张', icon: 'none' })
+                  return
+                }
+                this.setData({ 'form.image': 'data:image/jpeg;base64,' + b64 })
+                wx.showToast({ title: '图片已就绪', icon: 'success' })
+              },
+              fail: () => {
+                wx.hideLoading()
+                wx.showToast({ title: '图片处理失败', icon: 'none' })
+              }
+            })
+          },
+          fail: () => {
+            wx.hideLoading()
+            wx.showToast({ title: '图片压缩失败', icon: 'none' })
+          }
+        })
       }
     })
   },
 
   onPreviewImage() {
     if (!this.data.form.image) return
-    wx.previewImage({ urls: [this.data.form.image], current: this.data.form.image })
+    const img = this.data.form.image
+    // base64 图不支持 previewImage，直接提示
+    if (img.indexOf('data:') === 0) {
+      wx.showToast({ title: '图片已就绪，保存后全家人可见', icon: 'none' })
+      return
+    }
+    wx.previewImage({ urls: [img], current: img })
   },
 
   removeImage() {
@@ -109,7 +149,9 @@ Page({
     const id = e.currentTarget.dataset.id
     const dish = this.data.dishes.find(d => d.id === id)
     if (dish && dish.image) {
-      wx.previewImage({ urls: [dish.image], current: dish.image })
+      const img = dish.image
+      if (img.indexOf('data:') === 0) return
+      wx.previewImage({ urls: [img], current: img })
     }
   },
 
@@ -121,12 +163,16 @@ Page({
   onDescInput(e) { this.setData({ 'form.desc': e.detail.value }) },
 
   onCategoryChange(e) {
-    this.setData({ 'form.category': e.detail.value })
+    const idx = Number(e.detail.value)
+    const cat = this.data.categoryOptions[idx]
+    if (cat) {
+      this.setData({ catIndex: idx, 'form.category': cat.name })
+    }
   },
 
   openAdd() {
     this.setData({
-      showAdd: true, editId: null,
+      showAdd: true, editId: null, catIndex: 0,
       form: { name: '', price: '', category: '热菜', tag: '', desc: '', image: '' }
     })
   },
@@ -135,8 +181,9 @@ Page({
     const id = e.currentTarget.dataset.id
     const dish = this.data.dishes.find(d => d.id === id)
     if (!dish) return
+    const catIdx = this.data.categoryOptions.findIndex(c => c.name === dish.category)
     this.setData({
-      showAdd: true, editId: id,
+      showAdd: true, editId: id, catIndex: catIdx >= 0 ? catIdx : 0,
       form: {
         name: dish.name, price: String(dish.price),
         category: dish.category, tag: dish.tag || '',
