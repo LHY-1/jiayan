@@ -1,10 +1,8 @@
 name = "jiayan-notify"
 main = "worker.js"
 compatibility_date = "2024-01-01"
+compatibility_flags = []
 
-# KV Namespace 绑定
-# 在 Cloudflare Dashboard 创建 KV Namespace "order-kv" 后，在这里填入 ID
-# 或直接在 Dashboard → Workers & Pages → jiayan-notify → Settings → Bindings 添加
-[[kv_namespaces]]
-binding = "ORDERS_KV"
-id = "order-kv"
+[vars]
+# APPID 和 APPSECRET 请在 Dashboard → Settings → Variables 配置
+# ORDERS_KV KV Namespace 请在 Dashboard → Settings → Bindings 配置
