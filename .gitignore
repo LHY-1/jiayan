@@ -1,0 +1,9 @@
+node_modules/
+.project
+.idea/
+.DS_Store
+*.log
+.env
+.cloudbase/
+.cloudbaseroot/
+cloudfunctions/
