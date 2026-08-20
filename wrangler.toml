@@ -4,7 +4,7 @@ compatibility_date = "2024-01-01"
 
 [vars]
 APPID = "wxbc65e40b13a9de88"
-APPSECRET = "0b777091110ee582781d293266c652ca"
+APPSECRET = "1e44b014ae24321c8f7e39b4c9b1a70b"
 
 [[kv_namespaces]]
 binding = "ORDERS_KV"
