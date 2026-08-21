@@ -84,46 +84,26 @@ async function handleDecode(request, env) {
   }
 }
 
-// 订单 KV 键名（所有订单列表）
-const ALL_ORDERS_KV_KEY = 'all_orders'
-
-async function sendSubscribeMessage(env, params) {
-  const { openid, templateId, items, orderTime, page, orderer } = params
-  const { access_token } = await getAccessToken(env)
-  const data = templateId === FINISH_TEMPLATE_ID
-    ? buildFinishMessageData(items, orderTime)
-    : buildSubmitMessageData(items, orderTime, orderer)
-  const res = await fetch(
-    `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${access_token}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ touser: openid, template_id: templateId, page, data }) }
-  )
-  const result = await res.json()
-  if (result.errcode && result.errcode !== 0) {
-    throw new Error(`微信API错误: ${result.errmsg} (code=${result.errcode})`)
-  }
-  return { code: 0, msg: 'success' }
-}
-
-// 上传订单到云端
+// 上传/更新订单
 async function handleUploadOrder(request, env) {
   let body
   try { body = await request.json() } catch { return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400) }
   const { order } = body
   if (!order || !order.id) return jsonResponse({ code: 400, msg: '缺少 order 或 order.id' }, 400)
 
-  const raw = await env.ORDERS_KV.get(ALL_ORDERS_KV_KEY)
+  const raw = await env.ORDERS_KV.get(ORDERS_KV_KEY)
   let orders = raw ? JSON.parse(raw) : []
   const idx = orders.findIndex(o => o.id === order.id)
   if (idx >= 0) { orders[idx] = order }
   else { orders.unshift(order) }
   if (orders.length > 100) orders = orders.slice(0, 100)
-  await env.ORDERS_KV.put(ALL_ORDERS_KV_KEY, JSON.stringify(orders), { expirationTtl: 86400 * 7 })
+  await env.ORDERS_KV.put(ORDERS_KV_KEY, JSON.stringify(orders), { expirationTtl: 86400 * 7 })
   return jsonResponse({ code: 0 })
 }
 
 // 拉取所有订单
 async function handleFetchOrders(env) {
-  const raw = await env.ORDERS_KV.get(ALL_ORDERS_KV_KEY)
+  const raw = await env.ORDERS_KV.get(ORDERS_KV_KEY)
   const orders = raw ? JSON.parse(raw) : []
   return jsonResponse({ code: 0, orders })
 }
@@ -134,10 +114,10 @@ async function handleDeleteOrder(request, env) {
   const orderId = url.searchParams.get('id')
   if (!orderId) return jsonResponse({ code: 400, msg: '缺少 order id' }, 400)
 
-  const raw = await env.ORDERS_KV.get(ALL_ORDERS_KV_KEY)
+  const raw = await env.ORDERS_KV.get(ORDERS_KV_KEY)
   let orders = raw ? JSON.parse(raw) : []
   orders = orders.filter(o => o.id !== Number(orderId))
-  await env.ORDERS_KV.put(ALL_ORDERS_KV_KEY, JSON.stringify(orders), { expirationTtl: 86400 * 7 })
+  await env.ORDERS_KV.put(ORDERS_KV_KEY, JSON.stringify(orders), { expirationTtl: 86400 * 7 })
   return jsonResponse({ code: 0, msg: '删除成功' })
 }
 
@@ -183,28 +163,21 @@ async function handleSaveMenu(request, env) {
 }
 
 // 推送订阅消息
+// body: { openid, action: 'submit'|'start'|'finish', items, total, orderTime }
 async function handlePush(request, env) {
   let body
   try { body = await request.json() } catch { return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400) }
-  const { openid, templateId, action, items, orderTime, orderer } = body
+  const { openid, action, items, total, orderTime } = body
   if (!openid) {
     return jsonResponse({ code: 400, msg: '缺少 openid' }, 400)
-  }
-  // 优先使用 templateId，其次根据 action 推断
-  let tid = templateId
-  if (!tid) {
-    if (action === 'finish') tid = FINISH_TEMPLATE_ID
-    else if (action === 'start') tid = SUBMIT_TEMPLATE_ID
-    else tid = SUBMIT_TEMPLATE_ID
   }
   try {
     const result = await sendSubscribeMessage(env, {
       openid,
-      templateId: tid,
-      items: items || [],
+      action: action || 'submit',
+      items: items || [], total: total || 0,
       orderTime: orderTime || new Date().toISOString(),
-      page: 'pages/order/order',
-      orderer: orderer || '家人'
+      page: 'pages/order/order'
     })
     return jsonResponse(result)
   } catch (err) {
@@ -212,19 +185,72 @@ async function handlePush(request, env) {
   }
 }
 
+// ==================== 核心逻辑 ====================
+
+async function sendSubscribeMessage(env, params) {
+  const { openid, action, items, total, orderTime, page } = params
+  const { access_token } = await getAccessToken(env)
+  // 按消息类型选模板和字段
+  let templateId = SUBMIT_TEMPLATE_ID
+  let data
+  if (action === 'finish') {
+    templateId = FINISH_TEMPLATE_ID
+    data = buildFinishMessageData(items, total, orderTime)
+  } else if (action === 'start') {
+    // 开始做：复用下单通知模板，语义是「厨师开始做这道菜」
+    templateId = SUBMIT_TEMPLATE_ID
+    data = buildStartMessageData(items, total, orderTime)
+  } else {
+    // submit：新订单通知（推给厨师）
+    templateId = SUBMIT_TEMPLATE_ID
+    data = buildSubmitMessageData(items, total, orderTime)
+  }
+  const res = await fetch(
+    `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${access_token}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ touser: openid, template_id: templateId, page, data }) }
+  )
+  const result = await res.json()
+  if (result.errcode && result.errcode !== 0) {
+    throw new Error(`微信API错误: ${result.errmsg} (code=${result.errcode})`)
+  }
+  return { code: 0, msg: 'success' }
+}
+
 // 新订单通知（推给厨师）：菜品名称(thing5)、下单时间(time1)、下单用户(thing4)
-function buildSubmitMessageData(items, orderTime, orderer) {
-  items = items || []
-  const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
-  const name = (orderer && orderer.trim()) || '家人'
-  return { thing5: { value: itemStr }, time1: { value: formatTime(orderTime) }, thing4: { value: name } }
+function buildSubmitMessageData(items, total, orderTime) {
+  const itemStr = items.length > 0
+    ? items.map(i => `${i.name || i}×${i.qty || 1}`).join('、')
+    : '已下单'
+  return {
+    thing5: { value: itemStr.slice(0, 20) },
+    time1:  { value: formatTime(orderTime) },
+    thing4: { value: '原' }
+  }
+}
+
+// 开始做通知（推给下单者）：菜品名称(thing5)、开始时间(time1)、制作人(thing4)
+function buildStartMessageData(items, total, orderTime) {
+  const itemStr = items.length > 0
+    ? items.map(i => `${i.name || i}×${i.qty || 1}`).join('、')
+    : '已开始'
+  return {
+    thing5: { value: itemStr.slice(0, 20) },
+    time1:  { value: formatTime(orderTime || new Date().toISOString()) },
+    thing4: { value: '厨师' }
+  }
 }
 
 // 完成通知（推给下单者）：菜品名称(thing4)、完成时间(time1)、完成用户(thing3)
-function buildFinishMessageData(items, orderTime) {
-  items = items || []
-  const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
-  return { thing4: { value: itemStr }, time1: { value: formatTime(orderTime || new Date().toISOString()) }, thing3: { value: '厨师' } }
+function buildFinishMessageData(items, total, orderTime) {
+  const itemStr = items.length > 0
+    ? items.map(i => `${i.name || i}×${i.qty || 1}`).join('、')
+    : '已下单'
+  return {
+    thing4: { value: itemStr.slice(0, 20) },
+    time1:  { value: formatTime(orderTime || new Date().toISOString()) },
+    thing3: { value: '厨师' }
+  }
 }
 
 async function getAccessToken(env) {

@@ -1,0 +1,124 @@
+/** pages/notifications/notifications.wxss **/
+.page {
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 30rpx 16rpx;
+}
+
+.title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #2c2416;
+}
+
+.header-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-btn {
+  font-size: 24rpx;
+  color: #8a7e6e;
+  padding: 4rpx;
+}
+
+/* 通知列表 */
+.notif-list {
+  padding: 0 30rpx 40rpx;
+}
+
+.notif-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  background: #ffffff;
+  border: 2rpx solid #e8e0d6;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.notif-card.unread {
+  border-color: #c73e3a;
+  background: #fef8f7;
+}
+
+.notif-dot {
+  width: 14rpx;
+  height: 14rpx;
+  background: #c73e3a;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 8rpx;
+  margin-right: 14rpx;
+}
+
+.notif-content {
+  flex: 1;
+}
+
+.notif-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-bottom: 6rpx;
+}
+
+.notif-body {
+  display: block;
+  font-size: 24rpx;
+  color: #2c2416;
+  line-height: 1.5;
+  margin-bottom: 8rpx;
+}
+
+.notif-time {
+  display: block;
+  font-size: 20rpx;
+  color: #8a7e6e;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 120rpx 0;
+}
+
+.empty-emoji {
+  display: block;
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+
+.empty-desc {
+  display: block;
+  font-size: 26rpx;
+  color: #8a7e6e;
+  margin-bottom: 32rpx;
+  line-height: 1.6;
+}
+
+.back-btn {
+  background: #c73e3a;
+  color: #fff;
+  font-size: 28rpx;
+  padding: 18rpx 60rpx;
+  border-radius: 999rpx;
+  border: none;
+}
+
+.back-btn::after {
+  border: none;
+}

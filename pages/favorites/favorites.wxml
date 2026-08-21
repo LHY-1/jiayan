@@ -1,0 +1,31 @@
+<!-- pages/favorites/favorites.wxml -->
+<view class="page">
+  <view class="header">
+    <text class="title">我的收藏</text>
+    <text class="subtitle">收藏喜欢的菜品和搭配</text>
+  </view>
+
+  <view wx:if="{{isEmpty}}" class="empty-state">
+    <view class="empty-icon"><view class="heart-icon"></view></view>
+    <text class="empty-title">还没有收藏</text>
+    <text class="empty-desc">浏览菜单时，点击菜品上的❤️\n即可收藏喜欢的味道</text>
+  </view>
+
+  <view wx:else class="fav-list">
+    <view wx:for="{{favorites}}" wx:key="id" class="fav-card">
+      <view class="fav-img">
+        <image wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" />
+        <text wx:else>{{item.emoji}}</text>
+      </view>
+      <view class="fav-info">
+        <text class="fav-name">{{item.name}}</text>
+        <text class="fav-tag">{{item.tag}} · {{item.category}}</text>
+      </view>
+      <view class="fav-actions">
+        <text class="fav-price">¥{{item.price}}</text>
+        <view class="fav-add-btn" bindtap="addToCart" data-id="{{item.id}}">点单</view>
+        <view class="fav-remove" bindtap="removeFav" data-id="{{item.id}}">✕</view>
+      </view>
+    </view>
+  </view>
+</view>

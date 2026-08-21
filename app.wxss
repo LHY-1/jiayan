@@ -1,0 +1,59 @@
+/** app.wxss - 全局样式 **/
+page {
+  background-color: #faf6f0;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  color: #2c2416;
+  box-sizing: border-box;
+}
+
+:root {
+  --accent: #c73e3a;
+  --accent-soft: #fce8e7;
+  --bg: #faf6f0;
+  --surface: #ffffff;
+  --fg: #2c2416;
+  --muted: #8a7e6e;
+  --border: #e8e0d6;
+  --success: #2a9d5e;
+}
+
+/* 底部 TabBar（每个页面内联） */
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background: #ffffff;
+  border-top: 1rpx solid #e8e0d6;
+  padding: 6rpx 0 4rpx;
+  padding-bottom: calc(4rpx + env(safe-area-inset-bottom));
+  z-index: 999;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  padding: 2rpx 0;
+  min-height: 52rpx;
+}
+
+.tab-icon {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
+}
+
+.tab-text {
+  font-size: 22rpx;
+  line-height: 1;
+  color: #8a7e6e;
+}
+
+.tab-text.is-active {
+  color: #c73e3a;
+  font-weight: 600;
+}

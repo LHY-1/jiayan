@@ -1,0 +1,7 @@
+<!-- pages/random/random.tabbar.wxml -->
+<view class="tab-bar">
+  <view class="tab-item" bindtap="goTab" data-idx="0"><image class="tab-icon" src="/images/tab-menu.png" mode="aspectFit" /><text class="tab-text">菜单</text></view>
+  <view class="tab-item is-active"><image class="tab-icon" src="/images/tab-random-active.png" mode="aspectFit" /><text class="tab-text is-active">组菜</text></view>
+  <view class="tab-item" bindtap="goTab" data-idx="2"><image class="tab-icon" src="/images/tab-fav.png" mode="aspectFit" /><text class="tab-text">收藏</text></view>
+  <view class="tab-item" bindtap="goTab" data-idx="3"><image class="tab-icon" src="/images/tab-profile.png" mode="aspectFit" /><text class="tab-text">我的</text></view>
+</view>

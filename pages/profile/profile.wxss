@@ -1,0 +1,119 @@
+/** pages/profile/profile.wxss **/
+.page {
+  min-height: 100vh;
+  padding-bottom: 0;
+}
+
+.header {
+  padding: 28rpx 30rpx 16rpx;
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #2c2416;
+  line-height: 1.2;
+}
+
+.subtitle {
+  display: block;
+  font-size: 24rpx;
+  color: #8a7e6e;
+  margin-top: 6rpx;
+}
+
+.content {
+  padding: 0 30rpx;
+}
+
+/* 家庭卡片 */
+.family-card {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 2rpx solid #e8e0d6;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+}
+
+.family-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  background: #fce8e7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.family-name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.family-meta {
+  display: block;
+  font-size: 24rpx;
+  color: #8a7e6e;
+  margin-top: 4rpx;
+}
+
+/* 区块 */
+.section {
+  margin-bottom: 30rpx;
+}
+
+.section-label {
+  display: block;
+  font-size: 24rpx;
+  color: #8a7e6e;
+  margin-bottom: 16rpx;
+}
+
+/* 设置卡片 */
+.settings-card {
+  background: #ffffff;
+  border: 2rpx solid #e8e0d6;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28rpx 24rpx;
+  border-bottom: 2rpx solid #e8e0d6;
+}
+
+.setting-row:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  font-size: 28rpx;
+}
+
+/* 菜单行 */
+.menu-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28rpx 24rpx;
+  border-bottom: 2rpx solid #e8e0d6;
+  font-size: 28rpx;
+}
+
+.menu-row:last-child {
+  border-bottom: none;
+}
+
+.menu-arrow {
+  color: #8a7e6e;
+  font-size: 26rpx;
+}

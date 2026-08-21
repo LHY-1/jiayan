@@ -1,0 +1,104 @@
+<!-- pages/manage/manage.wxml -->
+<view class="page">
+  <view class="header">
+    <text class="title">菜品管理</text>
+    <text class="subtitle">管理你的菜单，随时增减调整</text>
+  </view>
+
+  <view class="search-bar">
+    <input class="search-input" placeholder="搜索菜品名称" value="{{searchKeyword}}" bindinput="onSearch" />
+  </view>
+
+  <scroll-view class="filter-bar" scroll-x enable-flex>
+    <view wx:for="{{filterCategories}}" wx:key="key" class="filter-chip {{activeCategory === item.key ? 'active' : ''}}" data-key="{{item.key}}" bindtap="onCategoryTap">{{item.name}}</view>
+  </scroll-view>
+
+  <view class="stat-row">
+    <text class="stat-label">我的菜品</text>
+    <text class="stat-count">共 {{filteredCount || dishes.length}} 道</text>
+  </view>
+
+  <view wx:if="{{dishes.length > 0}}" class="dish-list">
+    <view wx:for="{{dishes}}" wx:key="id" class="manage-item {{item.isUser ? 'user-item' : ''}}">
+      <view wx:if="{{item.image}}" class="manage-img" bindtap="previewImage" data-id="{{item.id}}">
+        <image src="{{item.image}}" mode="aspectFill" />
+      </view>
+      <view wx:else class="manage-img default-img">
+        <text class="img-emoji">{{item.emoji || '🍽️'}}</text>
+      </view>
+      <view class="manage-info">
+        <view class="manage-head">
+          <text class="manage-name">{{item.name}}</text>
+          <text class="manage-tag">{{item.tag}}</text>
+        </view>
+        <text class="manage-desc">{{item.desc}}</text>
+        <view class="manage-meta">
+          <text class="manage-price">¥{{item.price}}</text>
+          <text class="manage-cat">{{item.category}}</text>
+          <text class="manage-source {{item.isUser ? '' : 'default'}}">{{item.isUser ? '自定义' : '内置'}}</text>
+        </view>
+      </view>
+      <view class="manage-actions">
+        <view class="action-btn up" data-id="{{item.id}}" bindtap="moveUp">▲</view>
+        <view class="action-btn down" data-id="{{item.id}}" bindtap="moveDown">▼</view>
+        <view class="action-btn edit" data-id="{{item.id}}" bindtap="openEdit">编辑</view>
+        <view class="action-btn delete" data-id="{{item.id}}" bindtap="deleteDish">删除</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="empty-state">
+    <text class="empty-icon">🍽️</text>
+    <text class="empty-title">还没有菜品</text>
+    <text class="empty-desc">点击下方按钮添加第一道菜品</text>
+  </view>
+
+  <button class="add-fab" bindtap="openAdd">＋ 添加菜品</button>
+
+  <view class="modal-mask {{showAdd ? 'active' : ''}}" bindtap="closeAdd">
+    <view class="modal-content" catchtap="stopTap">
+      <view class="modal-header">
+        <text class="modal-title">{{editId ? '编辑菜品' : '添加菜品'}}</text>
+        <view class="modal-close" bindtap="closeAdd">✕</view>
+      </view>
+      <view class="form-body">
+        <view class="form-group">
+          <text class="form-label">菜品图片</text>
+          <view class="upload-area">
+            <view wx:if="{{form.image}}" class="upload-preview" bindtap="onPreviewImage">
+              <image src="{{form.image}}" mode="aspectFill" />
+              <view class="upload-remove" catchtap="removeImage">✕</view>
+            </view>
+            <view wx:else class="upload-placeholder" bindtap="onChooseImage">
+              <text class="upload-icon">📷</text>
+              <text class="upload-text">点击上传图片</text>
+            </view>
+          </view>
+        </view>
+        <view class="form-group">
+          <text class="form-label">菜名 *</text>
+          <input class="form-input" placeholder="例：红烧肉" value="{{form.name}}" bindinput="onNameInput" maxlength="20" />
+        </view>
+        <view class="form-group">
+          <text class="form-label">价格 (¥) *</text>
+          <input class="form-input" type="digit" placeholder="例：38" value="{{form.price}}" bindinput="onPriceInput" maxlength="4" />
+        </view>
+        <view class="form-group">
+          <text class="form-label">分类</text>
+          <picker mode="selector" range="{{categoryOptions}}" range-key="name" value="{{catIndex}}" bindchange="onCategoryChange">
+            <view class="form-picker">{{form.category}} ▾</view>
+          </picker>
+        </view>
+        <view class="form-group">
+          <text class="form-label">标签</text>
+          <input class="form-input" placeholder="例：经典 / 微辣" value="{{form.tag}}" bindinput="onTagInput" maxlength="10" />
+        </view>
+        <view class="form-group">
+          <text class="form-label">简介</text>
+          <input class="form-input" placeholder="例：肥瘦相间，入口即化" value="{{form.desc}}" bindinput="onDescInput" maxlength="30" />
+        </view>
+        <button class="save-btn" bindtap="saveDish">保存</button>
+      </view>
+    </view>
+  </view>
+</view>
