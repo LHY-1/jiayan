@@ -32,38 +32,54 @@ Page({
     });
   },
 
-  switchRole() {
-    const current = wx.getStorageSync('user_role') || 'orderer';
-    const next = current === 'orderer' ? 'chef' : 'orderer';
-    wx.showModal({
-      title: '切换身份',
-      content: `切换到「${next === 'chef' ? '👨‍🍳 厨师' : '🛒 下单者'}」模式？`,
+  // 选择头像
+  chooseAvatar() {
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
       success: (res) => {
-        if (res.confirm) {
-          wx.setStorageSync('user_role', next);
-          this.setData({ role: next });
-          wx.showToast({ title: next === 'chef' ? '已切换为厨师' : '已切换为下单者', icon: 'success' });
+        const avatarUrl = res.tempFiles[0].tempFilePath;
+        wx.setStorageSync('user_avatar', avatarUrl);
+        app.globalData.userInfo = { ...app.globalData.userInfo, avatarUrl };
+        this.setData({ avatarUrl });
+        wx.showToast({ title: '头像已更新', icon: 'success' });
+      }
+    });
+  },
+
+  // 编辑昵称和头像
+  editProfile() {
+    wx.showModal({
+      title: '编辑昵称',
+      editable: true,
+      placeholderText: '请输入昵称',
+      content: this.data.nickname,
+      success: (res) => {
+        if (res.confirm && res.content) {
+          this.setData({ nickname: res.content.trim() });
+          wx.setStorageSync('user_nickname', res.content.trim());
+          app.globalData.nickname = res.content.trim();
+          wx.showToast({ title: '已保存', icon: 'success' });
         }
       }
     });
   },
 
-  toggleSetting(e) {
-    const key = e.currentTarget.dataset.key;
-    const val = !this.data[key];
-    this.setData({ [key]: val });
-    app.globalData.settings[key] = val;
+  // 昵称输入
+  onNicknameInput(e) {
+    this.setData({ nickname: e.detail.value });
   },
 
-  goToManage() {
-    wx.navigateTo({ url: '/pages/manage/manage' });
+  // 保存昵称
+  saveNickname() {
+    if (this.data.nickname.trim()) {
+      wx.setStorageSync('user_nickname', this.data.nickname.trim());
+      app.globalData.nickname = this.data.nickname.trim();
+      wx.showToast({ title: '已保存', icon: 'success' });
+    }
   },
 
-  goToNotifications() {
-    wx.navigateTo({ url: '/pages/notifications/notifications' });
-  },
-
-  // 订阅消息授权（勾选「总是保持以上选择」后，授权一次长期有效，每次下单自动续额）
   subscribeNotify() {
     if (this.data._subscribing) {
       console.log('[订阅] 已有请求进行中，忽略重复点击');
@@ -97,10 +113,40 @@ Page({
       fail: (err) => {
         this.setData({ _subscribing: false });
         console.error('[订阅] 失败详情:', err);
-        console.error('[订阅] 失败', err);
         wx.showToast({ title: '授权失败，请重试', icon: 'none' });
       }
     });
+  },
+
+  switchRole() {
+    const current = wx.getStorageSync('user_role') || 'orderer';
+    const next = current === 'orderer' ? 'chef' : 'orderer';
+    wx.showModal({
+      title: '切换身份',
+      content: `切换到「${next === 'chef' ? '👨🍳 厨师' : '🛒 下单者'}」模式？`,
+      success: (res) => {
+        if (res.confirm) {
+          wx.setStorageSync('user_role', next);
+          this.setData({ role: next });
+          wx.showToast({ title: next === 'chef' ? '已切换为厨师' : '已切换为下单者', icon: 'success' });
+        }
+      }
+    });
+  },
+
+  toggleSetting(e) {
+    const key = e.currentTarget.dataset.key;
+    const val = !this.data[key];
+    this.setData({ [key]: val });
+    app.globalData.settings[key] = val;
+  },
+
+  goToManage() {
+    wx.navigateTo({ url: '/pages/manage/manage' });
+  },
+
+  goToNotifications() {
+    wx.navigateTo({ url: '/pages/notifications/notifications' });
   },
 
   goToHistory() {
@@ -113,30 +159,6 @@ Page({
       content: '家宴 V1.0\n家庭专属菜单与随机组菜工具\n\n用心做好每一道菜，\n让家人吃得开心。',
       showCancel: false
     });
-  },
-
-  // 设置昵称和头像
-  async onChooseAvatar(e) {
-    const { avatarUrl } = e.detail;
-    const nickname = e.detail.nickname || this.data.nickname;
-    
-    // 保存到 storage
-    wx.setStorageSync('user_avatar', avatarUrl);
-    wx.setStorageSync('user_nickname', nickname);
-    
-    // 更新 globalData
-    app.globalData.nickname = nickname;
-    app.globalData.userInfo = { avatarUrl, nickname };
-    
-    this.setData({ nickname, avatarUrl });
-    wx.showToast({ title: '已更新', icon: 'success' });
-  },
-
-  onNicknameInput(e) {
-    const nickname = e.detail.value;
-    this.setData({ nickname });
-    wx.setStorageSync('user_nickname', nickname);
-    app.globalData.nickname = nickname;
   },
 
   goTab(e) {
