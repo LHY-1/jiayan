@@ -203,3 +203,45 @@
   font-size: 28rpx;
   color: #2c2416;
 }
+
+/* 昵称设置 - 使用 button open-type */
+.nickname-row {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  gap: 20rpx;
+}
+
+.avatar-btn {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  padding: 0;
+  margin: 0;
+  line-height: normal;
+  background: transparent;
+  border: none;
+  overflow: hidden;
+}
+
+.avatar-btn::after {
+  border: none;
+  background: transparent;
+}
+
+.avatar-preview {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.nickname-input {
+  flex: 1;
+  height: 120rpx;
+  padding: 0 24rpx;
+  background: #faf6f0;
+  border: 2rpx solid #e8e0d6;
+  border-radius: 60rpx;
+  font-size: 30rpx;
+  color: #2c2416;
+}

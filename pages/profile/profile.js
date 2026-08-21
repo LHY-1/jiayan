@@ -33,22 +33,34 @@ Page({
   },
 
   // 选择头像
-  chooseAvatar() {
-    wx.chooseMedia({
-      count: 1,
-      mediaType: ['image'],
-      sourceType: ['album', 'camera'],
-      success: (res) => {
-        const avatarUrl = res.tempFiles[0].tempFilePath;
-        wx.setStorageSync('user_avatar', avatarUrl);
-        app.globalData.userInfo = { ...app.globalData.userInfo, avatarUrl };
-        this.setData({ avatarUrl });
-        wx.showToast({ title: '头像已更新', icon: 'success' });
-      }
-    });
+  onChooseAvatar(e) {
+    const { avatarUrl } = e.detail;
+    const nickname = e.detail.nickname || this.data.nickname;
+    
+    wx.setStorageSync('user_avatar', avatarUrl);
+    wx.setStorageSync('user_nickname', nickname);
+    app.globalData.avatarUrl = avatarUrl;
+    app.globalData.nickname = nickname;
+    
+    this.setData({ nickname, avatarUrl });
+    wx.showToast({ title: '已更新', icon: 'success' });
   },
 
-  // 编辑昵称和头像
+  // 昵称输入
+  onNicknameInput(e) {
+    this.setData({ nickname: e.detail.value });
+  },
+
+  // 保存昵称
+  saveNickname() {
+    if (this.data.nickname.trim()) {
+      wx.setStorageSync('user_nickname', this.data.nickname.trim());
+      app.globalData.nickname = this.data.nickname.trim();
+      wx.showToast({ title: '已保存', icon: 'success' });
+    }
+  },
+
+  // 编辑个人资料
   editProfile() {
     wx.showModal({
       title: '编辑昵称',
@@ -64,20 +76,6 @@ Page({
         }
       }
     });
-  },
-
-  // 昵称输入
-  onNicknameInput(e) {
-    this.setData({ nickname: e.detail.value });
-  },
-
-  // 保存昵称
-  saveNickname() {
-    if (this.data.nickname.trim()) {
-      wx.setStorageSync('user_nickname', this.data.nickname.trim());
-      app.globalData.nickname = this.data.nickname.trim();
-      wx.showToast({ title: '已保存', icon: 'success' });
-    }
   },
 
   subscribeNotify() {
