@@ -3,6 +3,7 @@ const app = getApp();
 
 Page({
   data: {
+    _subscribing: false,
     role: 'orderer',
     nickname: '',
     avatarUrl: '',
@@ -65,15 +66,21 @@ Page({
   // 订阅消息授权（勾选「总是保持以上选择」后，授权一次长期有效，每次下单自动续额）
   _subscribing: false,
   subscribeNotify() {
+    if (this.data._subscribing) {
+      console.log('[订阅] 已有请求进行中，忽略重复点击');
+      return;
+    }
     const SUBMIT_TEMPLATE_ID = 'Q5yDGEZM1o23liVkmMLZ4sltKDSop3tukazyfy21yBc';
     const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc';
     if (typeof wx.requestSubscribeMessage !== 'function') {
       wx.showToast({ title: '当前版本不支持订阅消息', icon: 'none' });
       return;
     }
+    this.setData({ _subscribing: true });
     wx.requestSubscribeMessage({
       tmplIds: [SUBMIT_TEMPLATE_ID, FINISH_TEMPLATE_ID],
       success: (res) => {
+        this.setData({ _subscribing: false });
         let granted = 0;
         if (res[SUBMIT_TEMPLATE_ID] === 'accept') granted++;
         if (res[FINISH_TEMPLATE_ID] === 'accept') granted++;
@@ -89,6 +96,7 @@ Page({
         }
       },
       fail: (err) => {
+        this.setData({ _subscribing: false });
         console.error('[订阅] 失败详情:', err);
         console.error('[订阅] 失败', err);
         wx.showToast({ title: '授权失败，请重试', icon: 'none' });
