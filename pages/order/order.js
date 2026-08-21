@@ -322,11 +322,6 @@ Page({
 
   _completeOrder(app, openid) {
     const pendingItems = this.data.cart.map(i => ({ name: i.name, qty: i.qty }))
-    wx.setStorageSync('_pending_notify', {
-      items: pendingItems,
-      total: this.data.total,
-      orderTime: new Date().toISOString()
-    })
     const order = {
       id: Date.now(),
       time: new Date().toISOString(),
@@ -396,16 +391,10 @@ Page({
   // 厨师操作：加载待做菜品（按菜品维度展开，只显示未完成的菜）
   loadPendingOrders() {
     this._fetchOrdersFromCloud().then(cloudOrders => {
-      const localCache = {}
-      ;(wx.getStorageSync('orderHistory') || []).forEach(o => { localCache[o.id] = o })
-      const merged = {}
-      cloudOrders.forEach(o => merged[o.id] = o)
-      Object.values(localCache).forEach(o => { if (!merged[o.id]) merged[o.id] = o })
-      const allOrders = Object.values(merged).sort((a, b) => b.id - a.id)
+      const allOrders = cloudOrders.sort((a, b) => b.id - a.id)
       this.setData({ pendingOrders: this._flattenPendingDishes(allOrders) })
     }).catch(() => {
-      const localHistory = wx.getStorageSync('orderHistory') || []
-      this.setData({ pendingOrders: this._flattenPendingDishes(localHistory) })
+      this.setData({ pendingOrders: [] })
     })
   },
 
@@ -444,7 +433,7 @@ Page({
     return anyCooking ? '烹饪中' : '已下单'
   },
 
-  // 更新单道菜状态，同步云端+本地，并派生订单状态
+  // 更新单道菜状态，同步云端，并派生订单状态
   _updateDishStatus(orderId, dishId, newStatus, cb) {
     this._fetchOrdersFromCloud().then(cloudOrders => {
       const order = cloudOrders.find(o => o.id === orderId)
@@ -453,24 +442,7 @@ Page({
         if (dish) dish.status = newStatus
         order.status = this._deriveOrderStatus(order)
         this._syncOrderToCloud(order)
-        // 同步本地历史
-        const history = wx.getStorageSync('orderHistory') || []
-        const idx = history.findIndex(o => o.id === orderId)
-        if (idx >= 0) { history[idx] = order } else { history.unshift(order) }
-        wx.setStorageSync('orderHistory', history)
         if (cb) cb(order)
-      } else {
-        // 云端没有，改本地
-        const history = wx.getStorageSync('orderHistory') || []
-        const localOrder = history.find(o => o.id === orderId)
-        if (localOrder) {
-          const dish = (localOrder.items || []).find(d => d.id === dishId)
-          if (dish) dish.status = newStatus
-          localOrder.status = this._deriveOrderStatus(localOrder)
-          wx.setStorageSync('orderHistory', history)
-          this._syncOrderToCloud(localOrder)
-          if (cb) cb(localOrder)
-        }
       }
       this.loadPendingOrders()
     })
@@ -491,10 +463,6 @@ Page({
             url: WORKER_URL + '/order?id=' + orderId,
             method: 'DELETE',
             success: () => {
-              const history = wx.getStorageSync('orderHistory') || []
-              const idx = history.findIndex(o => o.id === orderId)
-              if (idx >= 0) history.splice(idx, 1)
-              wx.setStorageSync('orderHistory', history)
               wx.showToast({ title: '已删除', icon: 'success' })
               this.loadPendingOrders()
             },
@@ -596,7 +564,6 @@ Page({
             return
           }
           cloudOrder.status = newStatus
-          wx.setStorageSync('orderHistory', cloudOrders)
           wx.request({
             url: WORKER_URL + '/order',
             method: 'POST',
@@ -610,13 +577,8 @@ Page({
           resolve(true)
         },
         fail: () => {
-          const history = wx.getStorageSync('orderHistory') || []
-          const order = history.find(o => o.id === orderId)
-          if (!order) { wx.showToast({ title: '订单不存在', icon: 'none' }); resolve(false); return }
-          order.status = newStatus
-          wx.setStorageSync('orderHistory', history)
-          wx.showToast({ title: `已标记为「${newStatus}」`, icon: 'success' })
-          resolve(true)
+          wx.showToast({ title: '网络异常', icon: 'none' })
+          resolve(false)
         }
       })
     })
