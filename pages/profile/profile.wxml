@@ -26,9 +26,7 @@
           </button>
           <view class="nickname-content">
             <input class="nickname-input" placeholder="输入昵称" value="{{nickname}}" bindinput="onNicknameInput" bindblur="saveNickname" />
-            <button class="get-nickname-btn" open-type="getNickname" bindgetnickname="onGetNickname">
-              <text class="btn-text">获取微信昵称</text>
-            </button>
+            <text class="get-nickname-hint">点击上方头像可自动同步微信昵称</text>
           </view>
         </view>
       </view>

@@ -32,17 +32,17 @@ Page({
     });
   },
 
-  // 选择头像
+  // 选择头像（chooseAvatar 也会同时返回微信昵称）
   onChooseAvatar(e) {
-    const { avatarUrl } = e.detail;
-    const nickname = e.detail.nickname || this.data.nickname;
-    
+    const { avatarUrl, nickname } = e.detail;
+    const currentNickname = nickname || this.data.nickname || wx.getStorageSync('user_nickname') || '';
+
     wx.setStorageSync('user_avatar', avatarUrl);
-    wx.setStorageSync('user_nickname', nickname);
+    wx.setStorageSync('user_nickname', currentNickname);
     app.globalData.avatarUrl = avatarUrl;
-    app.globalData.nickname = nickname;
-    
-    this.setData({ nickname, avatarUrl });
+    app.globalData.nickname = currentNickname;
+
+    this.setData({ avatarUrl, nickname: currentNickname });
     wx.showToast({ title: '头像已更新', icon: 'success' });
   },
 
