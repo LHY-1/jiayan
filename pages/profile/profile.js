@@ -57,19 +57,27 @@ Page({
 
   // 获取微信昵称按钮点击
   onGetNicknameTap() {
-    console.log('[昵称] 按钮被点击，尝试 wx.getUserProfile...');
+    console.log('[昵称] 1. 按钮被点击');
+    console.log('[昵称] 2. wx.getUserProfile 是否存在:', typeof wx.getUserProfile);
+    console.log('[昵称] 3. wx.canIUse getUserProfile:', wx.canIUse && wx.canIUse('getUserProfile'));
+
     if (wx.getUserProfile) {
+      console.log('[昵称] 4. 开始调用 wx.getUserProfile...');
       wx.getUserProfile({
         desc: '用于显示你的昵称',
         success: (res) => {
-          console.log('[昵称] getUserProfile 成功:', JSON.stringify(res.userInfo));
+          console.log('[昵称] 5. getUserProfile 成功');
+          console.log('[昵称] 6. userInfo:', JSON.stringify(res.userInfo));
           const nickname = res.userInfo && res.userInfo.nickName;
           const avatarUrl = res.userInfo && res.userInfo.avatarUrl;
+          console.log('[昵称] 7. nickname:', nickname, 'avatarUrl:', avatarUrl);
           if (nickname) {
             wx.setStorageSync('user_nickname', nickname);
             app.globalData.nickname = nickname;
             this.setData({ nickname });
             wx.showToast({ title: '昵称已获取', icon: 'success' });
+          } else {
+            wx.showToast({ title: '昵称为空', icon: 'none' });
           }
           if (avatarUrl && !this.data.avatarUrl) {
             wx.setStorageSync('user_avatar', avatarUrl);
@@ -78,13 +86,30 @@ Page({
           }
         },
         fail: (err) => {
-          console.log('[昵称] getUserProfile 失败:', err);
+          console.log('[昵称] 5. getUserProfile 失败:', JSON.stringify(err));
           wx.showToast({ title: '授权失败，请手动输入', icon: 'none' });
         }
       });
+      console.log('[昵称] 4.1 wx.getUserProfile 已调用，等待回调...');
     } else {
-      console.log('[昵称] 不支持 getUserProfile');
-      wx.showToast({ title: '请手动输入昵称', icon: 'none' });
+      console.log('[昵称] 不支持 getUserProfile，尝试 wx.getUserInfo...');
+      // 降级方案
+      wx.getUserInfo({
+        success: (res) => {
+          console.log('[昵称] getUserInfo 成功:', JSON.stringify(res.userInfo));
+          const nickname = res.userInfo && res.userInfo.nickName;
+          if (nickname) {
+            wx.setStorageSync('user_nickname', nickname);
+            app.globalData.nickname = nickname;
+            this.setData({ nickname });
+            wx.showToast({ title: '昵称已获取', icon: 'success' });
+          }
+        },
+        fail: (err) => {
+          console.log('[昵称] getUserInfo 也失败:', JSON.stringify(err));
+          wx.showToast({ title: '请手动输入昵称', icon: 'none' });
+        }
+      });
     }
   },
 
