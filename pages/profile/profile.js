@@ -38,10 +38,15 @@ Page({
   },
 
   // 选择头像（chooseAvatar 回调可能带微信昵称）
+  // 选择头像（chooseAvatar 回调可能带微信昵称）
   onChooseAvatar(e) {
+    console.log('[头像] chooseAvatar 回调，e.detail =', JSON.stringify(e.detail));
     const { avatarUrl, nickname } = e.detail;
+    console.log('[头像] avatarUrl:', avatarUrl);
+    console.log('[头像] nickname:', nickname);
     // 如果微信返回了昵称就用它，否则保留已有昵称
     const newNickname = nickname || this.data.nickname || wx.getStorageSync('user_nickname') || '';
+    console.log('[头像] 最终使用昵称:', newNickname);
 
     wx.setStorageSync('user_avatar', avatarUrl);
     wx.setStorageSync('user_nickname', newNickname);
