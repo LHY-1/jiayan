@@ -88,6 +88,7 @@ Page({
         }
       },
       fail: (err) => {
+        console.error('[订阅] 失败详情:', err);
         console.error('[订阅] 失败', err);
         wx.showToast({ title: '授权失败，请重试', icon: 'none' });
       }
