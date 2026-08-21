@@ -56,7 +56,6 @@ Page({
     const nick = (this.data.nickname || '').trim();
     wx.setStorageSync('user_nickname', nick);
     app.globalData.nickname = nick;
-    this.setData({ nicknameEditing: false });
     if (nick) wx.showToast({ title: '昵称已保存', icon: 'success' });
   },
 
