@@ -164,3 +164,17 @@
   border-radius: 32rpx;
   flex-shrink: 0;
 }
+
+.get-nickname-btn {
+  font-size: 22rpx;
+  color: #8a7e6e;
+  padding: 4rpx 16rpx;
+  margin-top: 8rpx;
+  line-height: 1.6;
+  background: transparent;
+  border: 1rpx solid #d4c9b8;
+  border-radius: 24rpx;
+}
+.get-nickname-btn::after {
+  border: none;
+}

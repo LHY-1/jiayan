@@ -53,6 +53,19 @@ Page({
   // 取消头像选择
   onAvatarCancel() {},
 
+  // 获取微信昵称（用户点击按钮授权后触发）
+  onGetNickname(e) {
+    const { nickname } = e.detail;
+    if (nickname) {
+      wx.setStorageSync('user_nickname', nickname);
+      app.globalData.nickname = nickname;
+      this.setData({ nickname });
+      wx.showToast({ title: '昵称已获取', icon: 'success' });
+    } else {
+      wx.showToast({ title: '获取失败，请手动设置', icon: 'none' });
+    }
+  },
+
   // 编辑个人资料（昵称）
   editProfile() {
     wx.showModal({
