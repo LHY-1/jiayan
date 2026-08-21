@@ -38,8 +38,8 @@ Page({
   // 选择头像（chooseAvatar 回调自带微信昵称）
   onChooseAvatar(e) {
     const { avatarUrl, nickname } = e.detail;
-    // 微信选择头像后会返回当前微信用户的昵称（如果用户有设置过）
-    const newNickname = nickname || '';
+    // 微信选择头像后会返回当前微信用户的昵称
+    const newNickname = nickname || this.data.nickname || wx.getStorageSync('user_nickname') || '';
 
     wx.setStorageSync('user_avatar', avatarUrl);
     wx.setStorageSync('user_nickname', newNickname);
@@ -48,6 +48,19 @@ Page({
 
     this.setData({ avatarUrl, nickname: newNickname });
     wx.showToast({ title: '头像已更新', icon: 'success' });
+  },
+
+  // 获取微信昵称授权
+  onGetNickname(e) {
+    const { nickname } = e.detail;
+    if (nickname) {
+      wx.setStorageSync('user_nickname', nickname);
+      app.globalData.nickname = nickname;
+      this.setData({ nickname });
+      wx.showToast({ title: '昵称已获取', icon: 'success' });
+    } else {
+      wx.showToast({ title: '获取昵称失败', icon: 'none' });
+    }
   },
 
   // 取消头像选择

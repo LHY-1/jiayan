@@ -7,12 +7,13 @@
 
   <view class="content">
     <!-- 用户信息卡片 -->
-    <view class="user-card" bindtap="editProfile">
+    <view class="user-card">
       <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" catchtap="stopBubble">
         <image class="avatar-img" src="{{avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
       </button>
       <view class="user-info">
         <text class="user-name">{{nickname || '设置昵称'}}</text>
+        <button class="get-nickname-btn" open-type="getNickname" bindgetnickname="onGetNickname" catchtap="stopBubble">获取微信昵称</button>
       </view>
     </view>
 

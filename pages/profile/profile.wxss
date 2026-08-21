@@ -158,3 +158,18 @@
   border-radius: 32rpx;
   flex-shrink: 0;
 }
+
+/* 获取微信昵称按钮 */
+.get-nickname-btn {
+  font-size: 22rpx;
+  color: #8a7e6e;
+  padding: 4rpx 12rpx;
+  margin-top: 8rpx;
+  line-height: 1.5;
+  background: transparent;
+  border: 1rpx solid #e8e0d6;
+  border-radius: 20rpx;
+}
+.get-nickname-btn::after {
+  border: none;
+}
