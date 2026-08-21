@@ -43,7 +43,20 @@ Page({
     app.globalData.nickname = nickname;
     
     this.setData({ nickname, avatarUrl });
-    wx.showToast({ title: '已更新', icon: 'success' });
+    wx.showToast({ title: '头像已更新', icon: 'success' });
+  },
+
+  // 获取微信昵称
+  onGetNickname(e) {
+    const { nickname } = e.detail;
+    if (nickname && nickname !== '') {
+      wx.setStorageSync('user_nickname', nickname);
+      app.globalData.nickname = nickname;
+      this.setData({ nickname });
+      wx.showToast({ title: '昵称已更新', icon: 'success' });
+    } else {
+      wx.showToast({ title: '未获取到昵称', icon: 'none' });
+    }
   },
 
   // 昵称输入

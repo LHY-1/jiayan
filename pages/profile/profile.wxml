@@ -24,7 +24,12 @@
           <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
             <image class="avatar-preview" src="{{avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
           </button>
-          <input class="nickname-input" placeholder="输入昵称" value="{{nickname}}" bindinput="onNicknameInput" bindblur="saveNickname" />
+          <view class="nickname-content">
+            <input class="nickname-input" placeholder="输入昵称" value="{{nickname}}" bindinput="onNicknameInput" bindblur="saveNickname" />
+            <button class="get-nickname-btn" open-type="getNickname" bindgetnickname="onGetNickname">
+              <text class="btn-text">获取微信昵称</text>
+            </button>
+          </view>
         </view>
       </view>
     </view>
