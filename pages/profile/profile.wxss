@@ -33,85 +33,62 @@
   background: #ffffff;
   border: 2rpx solid #e8e0d6;
   border-radius: 24rpx;
-  padding: 30rpx;
+  padding: 36rpx 30rpx;
   margin-bottom: 30rpx;
 }
 
-.user-avatar {
-  width: 100rpx;
-  height: 100rpx;
+.avatar-btn {
+  width: 120rpx;
+  height: 120rpx;
   border-radius: 50%;
+  padding: 0;
+  margin: 0;
+  line-height: normal;
+  background: transparent;
+  border: none;
   overflow: hidden;
-  margin-right: 24rpx;
   flex-shrink: 0;
+}
+
+.avatar-btn::after {
+  border: none;
+  background: transparent;
 }
 
 .avatar-img {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
 }
 
 .user-info {
   flex: 1;
+  margin-left: 28rpx;
 }
 
-.user-name {
-  display: block;
-  font-size: 32rpx;
+.nickname-input {
+  width: 100%;
+  height: 72rpx;
+  padding: 0 20rpx;
+  background: #faf6f0;
+  border: 2rpx solid #e8e0d6;
+  border-radius: 36rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: #2c2416;
+  box-sizing: border-box;
+}
+
+.nickname-input:focus {
+  border-color: #c73e3a;
+  background: #fff;
 }
 
 .user-hint {
   display: block;
   font-size: 24rpx;
   color: #8a7e6e;
-  margin-top: 4rpx;
-}
-
-.nickname-row {
-  padding: 20rpx 0;
-}
-
-.nickname-component {
-  width: 100%;
-}
-
-/* 家庭卡片 */
-.family-card {
-  display: flex;
-  align-items: center;
-  background: #ffffff;
-  border: 2rpx solid #e8e0d6;
-  border-radius: 24rpx;
-  padding: 30rpx;
-  margin-bottom: 30rpx;
-}
-
-.family-avatar {
-  width: 100rpx;
-  height: 100rpx;
-  background: #fce8e7;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48rpx;
-  margin-right: 24rpx;
-  flex-shrink: 0;
-}
-
-.family-name {
-  display: block;
-  font-size: 32rpx;
-  font-weight: 600;
-}
-
-.family-meta {
-  display: block;
-  font-size: 24rpx;
-  color: #8a7e6e;
-  margin-top: 4rpx;
+  margin-top: 8rpx;
 }
 
 /* 区块 */
@@ -167,106 +144,4 @@
 .menu-arrow {
   color: #8a7e6e;
   font-size: 26rpx;
-}
-/* 昵称设置按钮 */
-.nickname-row {
-  display: flex;
-  align-items: center;
-  padding: 20rpx 24rpx;
-  gap: 16rpx;
-}
-
-.nickname-btn, .save-btn {
-  flex-shrink: 0;
-  background: #c73e3a;
-  color: #fff;
-  padding: 16rpx 28rpx;
-  border-radius: 12rpx;
-  font-size: 26rpx;
-}
-
-.save-btn {
-  background: #2c2416;
-}
-
-.btn-text {
-  color: #fff;
-}
-
-.nickname-input {
-  flex: 1;
-  height: 72rpx;
-  padding: 0 24rpx;
-  background: #faf6f0;
-  border: 2rpx solid #e8e0d6;
-  border-radius: 12rpx;
-  font-size: 28rpx;
-  color: #2c2416;
-}
-
-/* 昵称设置 - 使用 button open-type */
-.nickname-row {
-  display: flex;
-  align-items: center;
-  padding: 24rpx;
-  gap: 20rpx;
-}
-
-.avatar-btn {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 50%;
-  padding: 0;
-  margin: 0;
-  line-height: normal;
-  background: transparent;
-  border: none;
-  overflow: hidden;
-}
-
-.avatar-btn::after {
-  border: none;
-  background: transparent;
-}
-
-.avatar-preview {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-}
-
-.nickname-input {
-  flex: 1;
-  height: 120rpx;
-  padding: 0 24rpx;
-  background: #faf6f0;
-  border: 2rpx solid #e8e0d6;
-  border-radius: 60rpx;
-  font-size: 30rpx;
-  color: #2c2416;
-}
-
-.nickname-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12rpx;
-}
-
-.nickname-input {
-  width: 100%;
-  height: 72rpx;
-  padding: 0 24rpx;
-  background: #faf6f0;
-  border: 2rpx solid #e8e0d6;
-  border-radius: 36rpx;
-  font-size: 28rpx;
-  color: #2c2416;
-  box-sizing: border-box;
-}
-
-.get-nickname-hint {
-  font-size: 22rpx;
-  color: #8a7e6e;
-  line-height: 1.4;
 }

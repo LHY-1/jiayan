@@ -32,7 +32,7 @@ Page({
     });
   },
 
-  // 选择头像（chooseAvatar 也会同时返回微信昵称）
+  // 选择头像（chooseAvatar 回调自带微信昵称）
   onChooseAvatar(e) {
     const { avatarUrl, nickname } = e.detail;
     const currentNickname = nickname || this.data.nickname || wx.getStorageSync('user_nickname') || '';
@@ -46,31 +46,18 @@ Page({
     wx.showToast({ title: '头像已更新', icon: 'success' });
   },
 
-  // 获取微信昵称
-  onGetNickname(e) {
-    const { nickname } = e.detail;
-    if (nickname && nickname !== '') {
-      wx.setStorageSync('user_nickname', nickname);
-      app.globalData.nickname = nickname;
-      this.setData({ nickname });
-      wx.showToast({ title: '昵称已更新', icon: 'success' });
-    } else {
-      wx.showToast({ title: '未获取到昵称', icon: 'none' });
-    }
-  },
-
   // 昵称输入
   onNicknameInput(e) {
     this.setData({ nickname: e.detail.value });
   },
 
-  // 保存昵称
+  // 保存昵称（blur 时触发）
   saveNickname() {
-    if (this.data.nickname.trim()) {
-      wx.setStorageSync('user_nickname', this.data.nickname.trim());
-      app.globalData.nickname = this.data.nickname.trim();
-      wx.showToast({ title: '已保存', icon: 'success' });
-    }
+    const nick = (this.data.nickname || '').trim();
+    wx.setStorageSync('user_nickname', nick);
+    app.globalData.nickname = nick;
+    this.setData({ nicknameEditing: false });
+    if (nick) wx.showToast({ title: '昵称已保存', icon: 'success' });
   },
 
   // 编辑个人资料

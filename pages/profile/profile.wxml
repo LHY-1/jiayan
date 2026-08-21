@@ -7,28 +7,15 @@
 
   <view class="content">
     <!-- 用户信息卡片 -->
-    <view class="user-card" wx:if="{{nickname}}" bindtap="editProfile">
-      <view class="user-avatar">
-        <image class="avatar-img" src="{{avatarUrl}}" mode="aspectFill"></image>
-      </view>
+    <view class="user-card">
+      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="avatar-img" src="{{avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      </button>
       <view class="user-info">
-        <text class="user-name">{{nickname}}</text>
-        <text class="user-hint">点击编辑昵称和头像</text>
-      </view>
-    </view>
-
-    <view class="section">
-      <text class="section-label">昵称设置</text>
-      <view class="settings-card">
-        <view class="nickname-row">
-          <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-            <image class="avatar-preview" src="{{avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
-          </button>
-          <view class="nickname-content">
-            <input class="nickname-input" placeholder="输入昵称" value="{{nickname}}" bindinput="onNicknameInput" bindblur="saveNickname" />
-            <text class="get-nickname-hint">点击上方头像可自动同步微信昵称</text>
-          </view>
-        </view>
+        <input class="nickname-input" placeholder="点击设置昵称" value="{{nickname}}"
+          bindinput="onNicknameInput" bindblur="saveNickname" />
+        <text class="user-hint" wx:if="{{!nickname}}">点击上方头像可同步微信昵称</text>
+        <text class="user-hint" wx:else>点击昵称可编辑</text>
       </view>
     </view>
 
