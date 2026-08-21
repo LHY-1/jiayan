@@ -143,18 +143,44 @@ Page({
   switchRole() {
     const next = (wx.getStorageSync('user_role') || 'orderer') === 'orderer' ? 'chef' : 'orderer'
     wx.setStorageSync('user_role', next)
+    const app = getApp()
+    const openid = app.globalData.openid || ''
     if (next === 'chef') {
-      // 切换到厨师时，保存厨师openid
-      const app = getApp()
-      if (app.globalData.openid) {
-        wx.setStorageSync('chef_openid', app.globalData.openid)
+      // 切换到厨师时，保存厨师openid（本地+云端）
+      if (openid) {
+        wx.setStorageSync('chef_openid', openid)
+        wx.setStorageSync('chef_confirmed', true)
+        // 同步到云端
+        wx.request({
+          url: WORKER_URL + '/chef',
+          method: 'POST',
+          header: { 'Content-Type': 'application/json' },
+          data: { action: 'set', openid: openid },
+          success: () => {
+            console.log('[角色切换] 厨师身份已同步云端')
+          },
+          fail: () => {}
+        })
       }
       this.loadPendingOrders()
       wx.showToast({ title: '已进入厨师视角', icon: 'none', duration: 1500 })
     } else {
+      // 切回下单者，清除云端厨师身份
+      if (openid) {
+        wx.removeStorageSync('chef_openid')
+        wx.removeStorageSync('chef_confirmed')
+        wx.request({
+          url: WORKER_URL + '/chef',
+          method: 'POST',
+          header: { 'Content-Type': 'application/json' },
+          data: { action: 'cancel', openid: '' },
+          success: () => {},
+          fail: () => {}
+        })
+      }
       wx.showToast({ title: '已切回下单视角', icon: 'none', duration: 1500 })
     }
-    this.setData({ role: next, chefOpenid: wx.getStorageSync('chef_openid') || '' })
+    this.setData({ role: next, chefOpenid: openid || '' })
   },
 
   loadCart() {
