@@ -51,9 +51,7 @@ Page({
   },
 
   // 取消头像选择
-  onAvatarCancel() {
-    console.log('[头像] 用户取消了头像选择');
-  },
+  onAvatarCancel() {},
 
   // 昵称输入
   onNicknameInput(e) {
