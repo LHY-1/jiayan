@@ -37,17 +37,22 @@
   margin-bottom: 30rpx;
 }
 
-.avatar-btn {
+.avatar-wrap {
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-btn {
+  width: 100rpx;
+  height: 100rpx;
   padding: 0;
   margin: 0;
   line-height: normal;
   background: transparent;
   border: none;
-  overflow: hidden;
-  flex-shrink: 0;
 }
 
 .avatar-btn::after {
@@ -56,9 +61,10 @@
 }
 
 .avatar-img {
-  width: 100%;
-  height: 100%;
+  width: 100rpx;
+  height: 100rpx;
   border-radius: 50%;
+  display: block;
 }
 
 .user-info {
@@ -157,19 +163,4 @@
   border: 2rpx solid #c73e3a;
   border-radius: 32rpx;
   flex-shrink: 0;
-}
-
-/* 获取微信昵称按钮 */
-.get-nickname-btn {
-  font-size: 22rpx;
-  color: #8a7e6e;
-  padding: 4rpx 12rpx;
-  margin-top: 8rpx;
-  line-height: 1.5;
-  background: transparent;
-  border: 1rpx solid #e8e0d6;
-  border-radius: 20rpx;
-}
-.get-nickname-btn::after {
-  border: none;
 }
