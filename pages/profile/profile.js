@@ -32,6 +32,9 @@ Page({
     });
   },
 
+  // 阻止事件冒泡（防止头像点击触发 editProfile）
+  stopBubble() {},
+
   // 选择头像（chooseAvatar 回调自带微信昵称）
   onChooseAvatar(e) {
     const { avatarUrl, nickname } = e.detail;
