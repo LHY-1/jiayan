@@ -14,6 +14,7 @@ Page({
     categoryOptions: [],
     catIndex: 0,
     filteredCount: 0,
+    previewImg: '',
     form: {
       name: '', price: '', category: '热菜', tag: '', desc: '', image: ''
     }
@@ -149,9 +150,8 @@ Page({
   onPreviewImage() {
     if (!this.data.form.image) return
     const img = this.data.form.image
-    // base64 图不支持 previewImage，直接提示
     if (img.indexOf('data:') === 0) {
-      wx.showToast({ title: '图片已就绪，保存后全家人可见', icon: 'none' })
+      this._previewBase64(img)
       return
     }
     wx.previewImage({ urls: [img], current: img })
@@ -166,9 +166,21 @@ Page({
     const dish = this.data.dishes.find(d => d.id === id)
     if (dish && dish.image) {
       const img = dish.image
-      if (img.indexOf('data:') === 0) return
+      if (img.indexOf('data:') === 0) {
+        this._previewBase64(img)
+        return
+      }
       wx.previewImage({ urls: [img], current: img })
     }
+  },
+
+  _previewBase64(base64) {
+    const fs = wx.getFileSystemManager()
+    const ext = base64.includes('png') ? 'png' : 'jpg'
+    const filePath = `${wx.env.USER_DATA_PATH}/preview.${ext}`
+    fs.writeFile({ filePath, data: base64.split(',')[1], encoding: 'base64', success: () => {
+      wx.previewImage({ urls: [filePath], current: filePath })
+    }})
   },
 
   stopTap() {},

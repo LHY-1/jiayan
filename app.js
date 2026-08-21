@@ -2,6 +2,7 @@
 App({
   globalData: {
     userInfo: null,
+    nickname: '',
     role: 'orderer',
     selectedPeople: 1,
     tastePrefs: ['咸鲜'],
@@ -22,6 +23,11 @@ App({
     if (cached) {
       app.globalData.openid = cached
       app.globalData.openidReady = true
+      // 同时恢复昵称
+      const nickname = wx.getStorageSync('user_nickname') || ''
+      if (nickname) {
+        app.globalData.nickname = nickname
+      }
       return Promise.resolve(cached)
     }
     return wx.login().then(code => {

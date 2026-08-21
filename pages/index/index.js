@@ -23,7 +23,8 @@ Page({
     filteredDishes: [],
     count: 0,
     cartCount: 0,
-    favorites: []
+    favorites: [],
+    previewImg: ''
   },
 
   onLoad() {
@@ -98,6 +99,15 @@ Page({
     wx.setStorageSync('cart', cart)
     this._updateCartCount()
     wx.showToast({ title: `已加入：${dish.name}`, icon: 'none' })
+  },
+
+  // 点击看大图（支持 base64）
+  previewImage(e) {
+    const img = e.currentTarget.dataset.image
+    if (img) this.setData({ previewImg: img })
+  },
+  closePreview() {
+    this.setData({ previewImg: '' })
   },
 
   _updateCartCount() {

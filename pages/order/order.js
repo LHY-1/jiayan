@@ -2,6 +2,7 @@
 const SUBMIT_TEMPLATE_ID = 'Q5yDGEZM1o23liVkmMLZ4sltKDSop3tukazyfy21yBc'
 const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc'
 const WORKER_URL = 'https://cook.071601.xyz'
+const app = getApp()
 
 let _refreshTimer = null
 
@@ -10,7 +11,7 @@ Page({
     cart: [], total: 0, totalQty: 0,
     cart: [], total: 0, totalQty: 0,
     role: 'orderer', pendingOrders: [], chefOpenid: '', chefConfirmed: false,
-    cloudSyncStatus: '', cloudStatus: ''
+    cloudSyncStatus: '', cloudStatus: '', previewImg: ''
   },
 
   onLoad() {
@@ -264,10 +265,11 @@ Page({
             if (chefOpenid) {
               const chefPayload = {
                 openid: chefOpenid,
-                action: 'submit',
+                templateId: SUBMIT_TEMPLATE_ID,
                 items: pendingItems.map(i => ({ name: i.name, qty: i.qty })),
                 total: this.data.total,
-                orderTime: new Date().toISOString()
+                orderTime: order.time,
+                orderer: app.globalData.nickname || '家人'
               }
               wx.request({
                 url: WORKER_URL + '/push',
@@ -524,10 +526,11 @@ Page({
     }
     const payload = {
       openid: ordererOpenid,
-      action: action,
+      templateId: action === 'start' ? SUBMIT_TEMPLATE_ID : FINISH_TEMPLATE_ID,
       items: [{ name: dish.name, qty: dish.qty }],
       total: dish.subtotal || dish.price * dish.qty,
-      orderTime: new Date().toISOString()
+      orderTime: dish.orderTimeStr || new Date().toISOString(),
+      orderer: app.globalData.nickname || '家人'
     }
     wx.request({
       url: WORKER_URL + '/push',
@@ -622,6 +625,14 @@ Page({
   },
   goToMenu() { wx.switchTab({ url: '/pages/index/index' }) },
   viewHistory() { wx.navigateTo({ url: '/pages/history/history' }) },
+  previewCartImage(e) {
+    const img = e.currentTarget.dataset.image
+    if (!img) return
+    wx.previewImage({ urls: [img], current: img })
+  },
+  closePreview() {
+    this.setData({ previewImg: '' })
+  },
 
   _addNotification(targetRole, title, content, orderId, type) {
     const list = wx.getStorageSync('notifications') || []

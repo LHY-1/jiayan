@@ -4,7 +4,8 @@ const { fetchCloudMenu } = require('../../utils/menu-sync');
 Page({
   data: {
     favorites: [],
-    isEmpty: true
+    isEmpty: true,
+    previewImg: ''
   },
 
   onShow() {
@@ -52,6 +53,15 @@ Page({
     }
     wx.setStorageSync('cart', cart);
     wx.showToast({ title: `已加入：${dish.name}`, icon: 'none' });
+  },
+
+  // 点击看大图
+  previewImage(e) {
+    const img = e.currentTarget.dataset.image;
+    if (img) this.setData({ previewImg: img });
+  },
+  closePreview() {
+    this.setData({ previewImg: '' });
   },
 
   removeFav(e) {

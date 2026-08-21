@@ -4,6 +4,8 @@ const app = getApp();
 Page({
   data: {
     role: 'orderer',
+    nickname: '',
+    avatarUrl: '',
     noSpicy: false,
     noSeafood: false,
     vegetarian: false
@@ -11,14 +13,22 @@ Page({
 
   onLoad() {
     const settings = app.globalData.settings;
+    const nickname = app.globalData.nickname || wx.getStorageSync('user_nickname') || '';
+    const avatarUrl = wx.getStorageSync('user_avatar') || '';
     this.setData({
       ...settings,
-      role: wx.getStorageSync('user_role') || 'orderer'
+      role: wx.getStorageSync('user_role') || 'orderer',
+      nickname,
+      avatarUrl
     });
   },
 
   onShow() {
-    this.setData({ role: wx.getStorageSync('user_role') || 'orderer' });
+    this.setData({ 
+      role: wx.getStorageSync('user_role') || 'orderer',
+      nickname: app.globalData.nickname || wx.getStorageSync('user_nickname') || '',
+      avatarUrl: wx.getStorageSync('user_avatar') || ''
+    });
   },
 
   switchRole() {
@@ -94,6 +104,30 @@ Page({
       content: '家宴 V1.0\n家庭专属菜单与随机组菜工具\n\n用心做好每一道菜，\n让家人吃得开心。',
       showCancel: false
     });
+  },
+
+  // 设置昵称和头像
+  async onChooseAvatar(e) {
+    const { avatarUrl } = e.detail;
+    const nickname = e.detail.nickname || this.data.nickname;
+    
+    // 保存到 storage
+    wx.setStorageSync('user_avatar', avatarUrl);
+    wx.setStorageSync('user_nickname', nickname);
+    
+    // 更新 globalData
+    app.globalData.nickname = nickname;
+    app.globalData.userInfo = { avatarUrl, nickname };
+    
+    this.setData({ nickname, avatarUrl });
+    wx.showToast({ title: '已更新', icon: 'success' });
+  },
+
+  onNicknameInput(e) {
+    const nickname = e.detail.value;
+    this.setData({ nickname });
+    wx.setStorageSync('user_nickname', nickname);
+    app.globalData.nickname = nickname;
   },
 
   goTab(e) {

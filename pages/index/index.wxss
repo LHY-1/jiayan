@@ -195,3 +195,21 @@
   font-size: 28rpx;
   color: #8a7e6e;
 }
+
+/* 图片大图预览 */
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.88);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+.preview-image {
+  max-width: 100%;
+  max-height: 100vh;
+  border-radius: 16rpx;
+  box-shadow: 0 8rpx 40rpx rgba(0,0,0,.5);
+}

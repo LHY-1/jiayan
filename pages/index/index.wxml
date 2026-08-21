@@ -20,7 +20,7 @@
   <view class="dish-grid">
     <view wx:for="{{filteredDishes}}" wx:key="id" class="dish-card">
       <view class="dish-card-inner">
-        <view class="dish-img" wx:if="{{item.image}}">
+        <view class="dish-img" wx:if="{{item.image}}" bindtap="previewImage" data-image="{{item.image}}">
           <image src="{{item.image}}" mode="aspectFill" />
         </view>
         <view class="dish-img" wx:else>{{item.emoji}}</view>
@@ -40,5 +40,10 @@
 
   <view wx:if="{{filteredDishes.length === 0}}" class="empty-state">
     <text class="empty-text">该分类暂无菜品</text>
+  </view>
+
+  <!-- 全屏看大图 -->
+  <view wx:if="{{previewImg}}" class="preview-overlay" bindtap="closePreview">
+    <image src="{{previewImg}}" mode="widthFix" class="preview-image" />
   </view>
 </view>

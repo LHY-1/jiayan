@@ -13,7 +13,7 @@
 
   <view wx:else class="fav-list">
     <view wx:for="{{favorites}}" wx:key="id" class="fav-card">
-      <view class="fav-img">
+      <view class="fav-img" bindtap="previewImage" data-image="{{item.image}}">
         <image wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" />
         <text wx:else>{{item.emoji}}</text>
       </view>
@@ -27,5 +27,10 @@
         <view class="fav-remove" bindtap="removeFav" data-id="{{item.id}}">✕</view>
       </view>
     </view>
+  </view>
+
+  <!-- 全屏看大图 -->
+  <view wx:if="{{previewImg}}" class="preview-overlay" bindtap="closePreview">
+    <image src="{{previewImg}}" mode="widthFix" class="preview-image" />
   </view>
 </view>

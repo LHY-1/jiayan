@@ -18,7 +18,7 @@
 
     <view wx:if="{{cart.length > 0}}" class="cart-list">
       <view wx:for="{{cart}}" wx:key="id" class="cart-item">
-        <view class="cart-img">
+        <view class="cart-img" bindtap="previewCartImage" data-image="{{item.image}}">
           <image wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" />
           <text wx:else>{{item.emoji}}</text>
         </view>
@@ -101,5 +101,10 @@
       <text class="empty-title">没有待处理订单</text>
       <text class="empty-desc">目前没有新的点单，休息一下吧</text>
     </view>
+  </view>
+
+  <!-- 图片大图预览 -->
+  <view wx:if="{{previewImg}}" class="preview-overlay" bindtap="closePreview">
+    <image src="{{previewImg}}" mode="widthFix" class="preview-image" />
   </view>
 </view>
