@@ -13,7 +13,7 @@
           <image class="avatar-img" src="{{avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
         </button>
       </view>
-      <view class="user-info" catchtap="stopBubble">
+      <view class="user-info">
         <text class="user-name">{{nickname || '设置昵称'}}</text>
         <button class="get-nickname-btn" open-type="getNickname" bindgetnickname="onGetNickname" bindtap="onGetNicknameTap">获取微信昵称</button>
       </view>
