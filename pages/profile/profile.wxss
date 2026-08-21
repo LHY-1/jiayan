@@ -134,3 +134,27 @@
   color: #8a7e6e;
   font-size: 26rpx;
 }
+
+/* 昵称设置 */
+.nickname-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  gap: 16rpx;
+}
+
+.nickname-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #2c2416;
+  padding: 12rpx 0;
+}
+
+.save-btn {
+  font-size: 26rpx;
+  color: #c73e3a;
+  padding: 12rpx 24rpx;
+  border: 2rpx solid #c73e3a;
+  border-radius: 32rpx;
+  flex-shrink: 0;
+}

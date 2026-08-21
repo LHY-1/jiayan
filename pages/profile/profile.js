@@ -38,14 +38,15 @@ Page({
   // 选择头像（chooseAvatar 回调自带微信昵称）
   onChooseAvatar(e) {
     const { avatarUrl, nickname } = e.detail;
-    const currentNickname = nickname || this.data.nickname || wx.getStorageSync('user_nickname') || '';
+    // 微信会返回当前微信用户的昵称，优先使用
+    const newNickname = nickname || this.data.nickname || wx.getStorageSync('user_nickname') || '';
 
     wx.setStorageSync('user_avatar', avatarUrl);
-    wx.setStorageSync('user_nickname', currentNickname);
+    wx.setStorageSync('user_nickname', newNickname);
     app.globalData.avatarUrl = avatarUrl;
-    app.globalData.nickname = currentNickname;
+    app.globalData.nickname = newNickname;
 
-    this.setData({ avatarUrl, nickname: currentNickname });
+    this.setData({ avatarUrl, nickname: newNickname });
     wx.showToast({ title: '头像已更新', icon: 'success' });
   },
 
@@ -54,12 +55,14 @@ Page({
     this.setData({ nickname: e.detail.value });
   },
 
-  // 保存昵称（blur 时触发）
+  // 保存昵称
   saveNickname() {
     const nick = (this.data.nickname || '').trim();
     wx.setStorageSync('user_nickname', nick);
     app.globalData.nickname = nick;
-    if (nick) wx.showToast({ title: '昵称已保存', icon: 'success' });
+    if (nick) {
+      wx.showToast({ title: '昵称已保存', icon: 'success' });
+    }
   },
 
   // 编辑个人资料
