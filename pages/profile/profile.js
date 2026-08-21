@@ -64,7 +64,6 @@ Page({
   },
 
   // 订阅消息授权（勾选「总是保持以上选择」后，授权一次长期有效，每次下单自动续额）
-  _subscribing: false,
   subscribeNotify() {
     if (this.data._subscribing) {
       console.log('[订阅] 已有请求进行中，忽略重复点击');
