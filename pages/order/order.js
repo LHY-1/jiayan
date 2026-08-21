@@ -347,14 +347,16 @@ Page({
   },
 
   _syncOrderToCloud(order) {
-    wx.request({
-      url: WORKER_URL + '/order',
-      method: 'POST',
-      header: { 'Content-Type': 'application/json' },
-      data: { order },
-      timeout: 10000,
-      success: () => {},
-      fail: () => {}
+    return new Promise((resolve) => {
+      wx.request({
+        url: WORKER_URL + '/order',
+        method: 'POST',
+        header: { 'Content-Type': 'application/json' },
+        data: { order },
+        timeout: 10000,
+        success: (res) => resolve(res.data),
+        fail: () => resolve(null)
+      })
     })
   },
 
@@ -433,7 +435,7 @@ Page({
     return anyCooking ? '烹饪中' : '已下单'
   },
 
-  // 更新单道菜状态，同步云端，并派生订单状态
+  // 更新单道菜状态，同步云端后再刷新列表
   _updateDishStatus(orderId, dishId, newStatus, cb) {
     this._fetchOrdersFromCloud().then(cloudOrders => {
       const order = cloudOrders.find(o => o.id === orderId)
@@ -441,10 +443,14 @@ Page({
         const dish = (order.items || []).find(d => d.id === dishId)
         if (dish) dish.status = newStatus
         order.status = this._deriveOrderStatus(order)
-        this._syncOrderToCloud(order)
-        if (cb) cb(order)
+        // 等云端存完再刷新列表，避免拉到旧数据
+        this._syncOrderToCloud(order).then(() => {
+          if (cb) cb(order)
+          this.loadPendingOrders()
+        })
+      } else {
+        this.loadPendingOrders()
       }
-      this.loadPendingOrders()
     })
   },
 
@@ -500,10 +506,16 @@ Page({
     const dishId = Number(e.currentTarget.dataset.dishId)
     const dish = this.data.pendingOrders.find(d => d.orderId === orderId && d.dishId === dishId)
     if (!dish) return
-    // 防重复点击：立即从列表移除，避免多次触发
+    // 防重复：立即从列表移除，避免多次触发推送
+    const doneKey = orderId + '-' + dishId
+    if (this._finishingSet && this._finishingSet.has(doneKey)) return
+    if (!this._finishingSet) this._finishingSet = new Set()
+    this._finishingSet.add(doneKey)
     this.setData({ pendingOrders: this.data.pendingOrders.filter(d => !(d.orderId === orderId && d.dishId === dishId)) })
     // 同步云端 + 派生订单状态
-    this._updateDishStatus(orderId, dishId, '已完成')
+    this._updateDishStatus(orderId, dishId, '已完成', () => {
+      this._finishingSet.delete(doneKey)
+    })
     this._addNotification('下单者', '🍽️ 菜做好了', `${dish.name} 已完成，趁热吃！`, orderId, 'status_update')
     wx.showToast({ title: `${dish.name} 完成`, icon: 'success' })
     // 推送下单者：这道菜做好了
