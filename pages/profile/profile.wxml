@@ -8,7 +8,7 @@
   <view class="content">
     <!-- 用户信息卡片 -->
     <view class="user-card">
-      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" bindcancel="onAvatarCancel">
         <image class="avatar-img" src="{{avatarUrl || '/images/default-avatar.png'}}" mode="aspectFit" style="width:100rpx;height:100rpx;border-radius:50%"></image>
       </button>
       <view class="user-info">
