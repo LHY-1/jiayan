@@ -35,12 +35,12 @@ export default {
     try { body = await request.json() } catch {
       return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400)
     }
-    const { openid, templateId, items, total, orderTime } = body
+    const { openid, templateId, items, total, orderTime, page, orderer } = body
     if (!openid || !templateId) {
       return jsonResponse({ code: 400, msg: '缺少 openid 或 templateId' }, 400)
     }
     try {
-      const result = await sendSubscribeMessage(env, { openid, templateId, items, total, orderTime, page: 'pages/order/order' })
+      const result = await sendSubscribeMessage(env, { openid, templateId, items, total, orderTime, page, orderer })
       return jsonResponse(result)
     } catch (err) {
       return jsonResponse({ code: -1, msg: err.message }, 500)
@@ -71,11 +71,11 @@ const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc'
 const ORDERS_KV_KEY = 'all_orders'
 
 async function sendSubscribeMessage(env, params) {
-  const { openid, templateId, items, total, orderTime, page } = params
+  const { openid, templateId, items, total, orderTime, page, orderer } = params
   const { access_token } = await getAccessToken(env)
   const data = templateId === FINISH_TEMPLATE_ID
     ? buildFinishMessageData(items)
-    : buildSubmitMessageData(items, orderTime)
+    : buildSubmitMessageData(items, orderTime, orderer)
   const res = await fetch(
     `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${access_token}`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ touser: openid, template_id: templateId, page, data }) }
@@ -126,16 +126,17 @@ async function handleDeleteOrder(request, env) {
   return jsonResponse({ code: 0, msg: '删除成功' })
 }
 
-function buildSubmitMessageData(items, orderTime) {
+function buildSubmitMessageData(items, orderTime, orderer) {
   items = items || []
   const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
-  return { thing5: { value: itemStr }, time1: { value: formatTime(orderTime) }, thing4: { value: '原' } }
+  const name = (orderer && orderer.trim()) || '家人'
+  return { thing5: { value: itemStr }, time1: { value: formatTime(orderTime) }, thing4: { value: name } }
 }
 
-function buildFinishMessageData(items) {
+function buildFinishMessageData(items, orderTime) {
   items = items || []
   const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
-  return { thing4: { value: itemStr }, time1: { value: formatTime(new Date().toISOString()) }, thing3: { value: '厨师' } }
+  return { thing4: { value: itemStr }, time1: { value: formatTime(orderTime || new Date().toISOString()) }, thing3: { value: '厨师' } }
 }
 
 async function getAccessToken(env) {
