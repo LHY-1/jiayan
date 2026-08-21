@@ -289,12 +289,13 @@ Page({
           // 从云端获取厨师 openid（下单者设备本地没有这个值）
           this._fetchChefOpenid().then(chefOpenid => {
             if (chefOpenid) {
+              const orderTime = new Date().toISOString();
               const chefPayload = {
                 openid: chefOpenid,
                 templateId: SUBMIT_TEMPLATE_ID,
                 items: pendingItems.map(i => ({ name: i.name, qty: i.qty })),
                 total: this.data.total,
-                orderTime: order.time,
+                orderTime: orderTime,
                 orderer: app.globalData.nickname || '家人'
               }
               wx.request({
