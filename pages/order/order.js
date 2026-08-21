@@ -9,7 +9,6 @@ let _refreshTimer = null
 Page({
   data: {
     cart: [], total: 0, totalQty: 0,
-    cart: [], total: 0, totalQty: 0,
     role: 'orderer', pendingOrders: [], chefOpenid: '', chefConfirmed: false,
     cloudSyncStatus: '', cloudStatus: '', previewImg: ''
   },
@@ -533,8 +532,7 @@ Page({
     const dishId = Number(e.currentTarget.dataset.dishId)
     const dish = this.data.pendingOrders.find(d => d.orderId === orderId && d.dishId === dishId)
     if (!dish) return
-    // 乐观更新 UI
-    dish.status = '已完成'
+    // 防重复点击：立即从列表移除，避免多次触发
     this.setData({ pendingOrders: this.data.pendingOrders.filter(d => !(d.orderId === orderId && d.dishId === dishId)) })
     // 同步云端 + 派生订单状态
     this._updateDishStatus(orderId, dishId, '已完成')
