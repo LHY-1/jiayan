@@ -63,6 +63,7 @@ Page({
   },
 
   // 订阅消息授权（勾选「总是保持以上选择」后，授权一次长期有效，每次下单自动续额）
+  _subscribing: false,
   subscribeNotify() {
     const SUBMIT_TEMPLATE_ID = 'Q5yDGEZM1o23liVkmMLZ4sltKDSop3tukazyfy21yBc';
     const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc';
