@@ -53,22 +53,7 @@ Page({
   // 取消头像选择
   onAvatarCancel() {},
 
-  // 昵称输入
-  onNicknameInput(e) {
-    this.setData({ nickname: e.detail.value });
-  },
-
-  // 保存昵称
-  saveNickname() {
-    const nick = (this.data.nickname || '').trim();
-    wx.setStorageSync('user_nickname', nick);
-    app.globalData.nickname = nick;
-    if (nick) {
-      wx.showToast({ title: '昵称已保存', icon: 'success' });
-    }
-  },
-
-  // 编辑个人资料
+  // 编辑个人资料（昵称）
   editProfile() {
     wx.showModal({
       title: '编辑昵称',
