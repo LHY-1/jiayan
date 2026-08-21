@@ -33,7 +33,9 @@ Page({
   },
 
   // 阻止事件冒泡（防止头像点击触发 editProfile）
-  stopBubble() {},
+  stopBubble() {
+    console.log('[事件] stopBubble 触发');
+  },
 
   // 选择头像（chooseAvatar 回调可能带微信昵称）
   onChooseAvatar(e) {
@@ -53,15 +55,23 @@ Page({
   // 取消头像选择
   onAvatarCancel() {},
 
+  // 获取微信昵称按钮点击
+  onGetNicknameTap() {
+    console.log('[昵称] 按钮被点击，等待微信回调...');
+  },
+
   // 获取微信昵称（用户点击按钮授权后触发）
   onGetNickname(e) {
-    const { nickname } = e.detail;
+    console.log('[昵称] getNickname 回调触发，e.detail =', JSON.stringify(e.detail));
+    const nickname = e.detail && e.detail.nickname;
     if (nickname) {
+      console.log('[昵称] 获取成功:', nickname);
       wx.setStorageSync('user_nickname', nickname);
       app.globalData.nickname = nickname;
       this.setData({ nickname });
       wx.showToast({ title: '昵称已获取', icon: 'success' });
     } else {
+      console.log('[昵称] 获取失败，e.detail 无 nickname 字段');
       wx.showToast({ title: '获取失败，请手动设置', icon: 'none' });
     }
   },
