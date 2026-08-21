@@ -38,8 +38,8 @@ Page({
   // 选择头像（chooseAvatar 回调自带微信昵称）
   onChooseAvatar(e) {
     const { avatarUrl, nickname } = e.detail;
-    // 微信选择头像后会返回当前微信用户的昵称
-    const newNickname = nickname || this.data.nickname || wx.getStorageSync('user_nickname') || '';
+    // 微信选择头像后直接返回微信昵称（如果用户已设置）
+    const newNickname = nickname || '';
 
     wx.setStorageSync('user_avatar', avatarUrl);
     wx.setStorageSync('user_nickname', newNickname);
