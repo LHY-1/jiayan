@@ -12,9 +12,8 @@
         <image class="avatar-img" src="{{avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
       </button>
       <view class="user-info">
-        <text class="user-name">{{nickname || '未设置昵称'}}</text>
-        <text class="user-hint" wx:if="{{!nickname}}">点击上方头像同步微信昵称</text>
-        <text class="user-hint" wx:else>点击头像可更换</text>
+        <input class="nickname-input" placeholder="点击设置昵称" value="{{nickname}}"
+          bindinput="onNicknameInput" bindblur="saveNickname" />
       </view>
     </view>
 
