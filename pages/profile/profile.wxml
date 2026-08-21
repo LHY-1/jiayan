@@ -8,7 +8,7 @@
   <view class="content">
     <!-- 用户信息卡片 -->
     <view class="user-card" bindtap="editProfile">
-      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" hover-class="none">
+      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" catchtap="stopBubble">
         <image class="avatar-img" src="{{avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
       </button>
       <view class="user-info">
