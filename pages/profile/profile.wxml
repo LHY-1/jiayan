@@ -7,15 +7,14 @@
 
   <view class="content">
     <!-- 用户信息卡片 -->
-    <view class="user-card" bindtap="editProfile">
-      <view class="avatar-wrap" catchtap="stopBubble">
+    <view class="user-card">
+      <view class="avatar-wrap">
         <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
           <image class="avatar-img" src="{{avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
         </button>
       </view>
       <view class="user-info">
-        <text class="user-name">{{nickname || '设置昵称'}}</text>
-        <text class="user-hint">点击设置昵称</text>
+        <input class="nickname-input" type="nickname" placeholder="点击设置昵称" value="{{nickname}}" bindinput="onNicknameInput" bindblur="saveNickname" maxlength="20" />
       </view>
     </view>
 

@@ -57,6 +57,22 @@ Page({
     wx.showToast({ title: '头像已更新', icon: 'success' });
   },
 
+  // 昵称输入（type=nickname 的 input 会自动拉起微信昵称填充）
+  onNicknameInput(e) {
+    const nickname = e.detail.value;
+    console.log('[昵称] input 输入:', nickname);
+    this.setData({ nickname });
+  },
+
+  // 保存昵称
+  saveNickname() {
+    const nick = (this.data.nickname || '').trim();
+    console.log('[昵称] 保存:', nick);
+    wx.setStorageSync('user_nickname', nick);
+    app.globalData.nickname = nick;
+    if (nick) wx.showToast({ title: '昵称已保存', icon: 'success' });
+  },
+
   // 取消头像选择
   onAvatarCancel() {},
 
