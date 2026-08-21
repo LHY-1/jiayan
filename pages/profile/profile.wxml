@@ -15,7 +15,7 @@
       </view>
       <view class="user-info">
         <text class="user-name">{{nickname || '设置昵称'}}</text>
-        <button class="get-nickname-btn" bindtap="onGetNicknameTap">获取微信昵称</button>
+        <text class="user-hint">点击设置昵称</text>
       </view>
     </view>
 
