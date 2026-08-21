@@ -57,7 +57,35 @@ Page({
 
   // 获取微信昵称按钮点击
   onGetNicknameTap() {
-    console.log('[昵称] 按钮被点击，等待微信回调...');
+    console.log('[昵称] 按钮被点击，尝试 wx.getUserProfile...');
+    if (wx.getUserProfile) {
+      wx.getUserProfile({
+        desc: '用于显示你的昵称',
+        success: (res) => {
+          console.log('[昵称] getUserProfile 成功:', JSON.stringify(res.userInfo));
+          const nickname = res.userInfo && res.userInfo.nickName;
+          const avatarUrl = res.userInfo && res.userInfo.avatarUrl;
+          if (nickname) {
+            wx.setStorageSync('user_nickname', nickname);
+            app.globalData.nickname = nickname;
+            this.setData({ nickname });
+            wx.showToast({ title: '昵称已获取', icon: 'success' });
+          }
+          if (avatarUrl && !this.data.avatarUrl) {
+            wx.setStorageSync('user_avatar', avatarUrl);
+            app.globalData.avatarUrl = avatarUrl;
+            this.setData({ avatarUrl });
+          }
+        },
+        fail: (err) => {
+          console.log('[昵称] getUserProfile 失败:', err);
+          wx.showToast({ title: '授权失败，请手动输入', icon: 'none' });
+        }
+      });
+    } else {
+      console.log('[昵称] 不支持 getUserProfile');
+      wx.showToast({ title: '请手动输入昵称', icon: 'none' });
+    }
   },
 
   // 获取微信昵称（用户点击按钮授权后触发）
