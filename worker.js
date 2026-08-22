@@ -218,7 +218,7 @@ async function handleSaveMenu(request, env) {
 async function handlePush(request, env) {
   let body
   try { body = await request.json() } catch { return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400) }
-  const { openid, templateId, action, items, orderTime, orderer, status } = body
+  const { openid, templateId, action, items, orderTime, orderer, status, page } = body
   if (!openid) {
     return jsonResponse({ code: 400, msg: '缺少 openid' }, 400)
   }
