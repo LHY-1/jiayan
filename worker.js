@@ -241,6 +241,23 @@ async function handlePush(request, env) {
     })
     return jsonResponse(result)
   } catch (err) {
+    // 如果进度模板推送失败（用户未授权），降级用新订单模板
+    if (tid === PROGRESS_TEMPLATE_ID) {
+      try {
+        const fallback = await sendSubscribeMessage(env, {
+          openid,
+          templateId: SUBMIT_TEMPLATE_ID,
+          items: items || [],
+          orderTime: orderTime || new Date().toISOString(),
+          page: page || 'pages/history/history',
+          orderer: orderer || '家人',
+          status: action || status || ''
+        })
+        return jsonResponse({ ...fallback, fallback: true })
+      } catch (err2) {
+        return jsonResponse({ code: -1, msg: err2.message }, 500)
+      }
+    }
     return jsonResponse({ code: -1, msg: err.message }, 500)
   }
 }

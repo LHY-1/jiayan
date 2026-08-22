@@ -536,7 +536,9 @@ Page({
     }
     const payload = {
       openid: ordererOpenid,
+      // start 用进度模板（新），如果未授权会失败，worker 会返回错误码
       templateId: action === 'start' ? PROGRESS_TEMPLATE_ID : FINISH_TEMPLATE_ID,
+      action: action,
       items: [{ name: dish.name, qty: dish.qty }],
       total: dish.subtotal || dish.price * dish.qty,
       orderTime: dish.orderTimeStr || new Date().toISOString(),
