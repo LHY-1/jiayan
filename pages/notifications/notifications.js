@@ -40,6 +40,16 @@ Page({
     });
     wx.setStorageSync('notifications', list);
     this.loadNotifs();
+
+    // 如果通知关联了订单，跳到订单记录页
+    const notif = list.find(n => n.id === id);
+    if (notif && notif.orderId) {
+      wx.switchTab({ url: '/pages/order/order' });
+      // 延迟跳转到订单记录页
+      setTimeout(() => {
+        wx.navigateTo({ url: '/pages/history/history' });
+      }, 300);
+    }
   },
 
   markAllRead() {

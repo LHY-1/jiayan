@@ -235,7 +235,7 @@ async function handlePush(request, env) {
       templateId: tid,
       items: items || [],
       orderTime: orderTime || new Date().toISOString(),
-      page: 'pages/order/order',
+      page: 'pages/history/history',
       orderer: orderer || '家人',
       status: action || status || ''
     })
