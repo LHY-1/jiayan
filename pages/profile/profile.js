@@ -101,18 +101,20 @@ Page({
     }
     const SUBMIT_TEMPLATE_ID = 'Q5yDGEZM1o23liVkmMLZ4sltKDSop3tukazyfy21yBc';
     const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc';
+    const PROGRESS_TEMPLATE_ID = 'R8v98WywhsIZo5HJb6w--TgWtZhYbTAKszM-0vCLOEU';
     if (typeof wx.requestSubscribeMessage !== 'function') {
       wx.showToast({ title: '当前版本不支持订阅消息', icon: 'none' });
       return;
     }
     this.setData({ _subscribing: true });
     wx.requestSubscribeMessage({
-      tmplIds: [SUBMIT_TEMPLATE_ID, FINISH_TEMPLATE_ID],
+      tmplIds: [SUBMIT_TEMPLATE_ID, FINISH_TEMPLATE_ID, PROGRESS_TEMPLATE_ID],
       success: (res) => {
         this.setData({ _subscribing: false });
         let granted = 0;
         if (res[SUBMIT_TEMPLATE_ID] === 'accept') granted++;
         if (res[FINISH_TEMPLATE_ID] === 'accept') granted++;
+        if (res[PROGRESS_TEMPLATE_ID] === 'accept') granted++;
         if (granted > 0) {
           wx.setStorageSync('_notify_subscribed', true);
           wx.showModal({

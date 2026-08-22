@@ -1,6 +1,7 @@
 // pages/order/order.js
 const SUBMIT_TEMPLATE_ID = 'Q5yDGEZM1o23liVkmMLZ4sltKDSop3tukazyfy21yBc'
 const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc'
+const PROGRESS_TEMPLATE_ID = 'R8v98WywhsIZo5HJb6w--TgWtZhYbTAKszM-0vCLOEU'
 const WORKER_URL = 'https://cook.071601.xyz'
 const app = getApp()
 
@@ -93,7 +94,7 @@ Page({
     // 请求订阅授权：厨师授权「新订单通知」模板，才能收到下单推送
     if (typeof wx.requestSubscribeMessage === 'function') {
       wx.requestSubscribeMessage({
-        tmplIds: [SUBMIT_TEMPLATE_ID],
+        tmplIds: [SUBMIT_TEMPLATE_ID, PROGRESS_TEMPLATE_ID],
         success: (res) => {
           if (res[SUBMIT_TEMPLATE_ID] === 'accept') {
             wx.setStorageSync('_chef_subscribed', true)
@@ -271,7 +272,7 @@ Page({
     // 先保存 pendingItems，以便在回调中使用
     const pendingItems = this.data.cart.map(i => ({ name: i.name, qty: i.qty }))
     wx.requestSubscribeMessage({
-      tmplIds: [SUBMIT_TEMPLATE_ID, FINISH_TEMPLATE_ID],
+      tmplIds: [SUBMIT_TEMPLATE_ID, FINISH_TEMPLATE_ID, PROGRESS_TEMPLATE_ID],
       success: (res) => {
         this.submitting = false
         this._completeOrder(app, openid)
@@ -531,7 +532,7 @@ Page({
     }
     const payload = {
       openid: ordererOpenid,
-      templateId: action === 'start' ? SUBMIT_TEMPLATE_ID : FINISH_TEMPLATE_ID,
+      templateId: action === 'start' ? PROGRESS_TEMPLATE_ID : FINISH_TEMPLATE_ID,
       items: [{ name: dish.name, qty: dish.qty }],
       total: dish.subtotal || dish.price * dish.qty,
       orderTime: dish.orderTimeStr || new Date().toISOString(),

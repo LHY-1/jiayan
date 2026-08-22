@@ -58,6 +58,7 @@ export default {
 
 const SUBMIT_TEMPLATE_ID = 'Q5yDGEZM1o23liVkmMLZ4sltKDSop3tukazyfy21yBc'
 const FINISH_TEMPLATE_ID = 'vzYrBd5EMjAXZzLkTSOA5Mznly5Mwd05Djvj91tu0sc'
+const PROGRESS_TEMPLATE_ID = 'R8v98WywhsIZo5HJb6w--TgWtZhYbTAKszM-0vCLOEU'
 const ORDERS_KV_KEY = 'orders'
 const CHEF_KV_KEY = 'chef_openid'
 
@@ -88,11 +89,16 @@ async function handleDecode(request, env) {
 const ALL_ORDERS_KV_KEY = 'all_orders'
 
 async function sendSubscribeMessage(env, params) {
-  const { openid, templateId, items, orderTime, page, orderer } = params
+  const { openid, templateId, items, orderTime, page, orderer, status } = params
   const { access_token } = await getAccessToken(env)
-  const data = templateId === FINISH_TEMPLATE_ID
-    ? buildFinishMessageData(items, orderTime)
-    : buildSubmitMessageData(items, orderTime, orderer)
+  let data
+  if (templateId === PROGRESS_TEMPLATE_ID) {
+    data = buildProgressMessageData(items, status)
+  } else if (templateId === FINISH_TEMPLATE_ID) {
+    data = buildFinishMessageData(items, orderTime)
+  } else {
+    data = buildSubmitMessageData(items, orderTime, orderer)
+  }
   const res = await fetch(
     `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${access_token}`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ touser: openid, template_id: templateId, page, data }) }
@@ -186,7 +192,7 @@ async function handleSaveMenu(request, env) {
 async function handlePush(request, env) {
   let body
   try { body = await request.json() } catch { return jsonResponse({ code: 400, msg: 'Invalid JSON' }, 400) }
-  const { openid, templateId, action, items, orderTime, orderer } = body
+  const { openid, templateId, action, items, orderTime, orderer, status } = body
   if (!openid) {
     return jsonResponse({ code: 400, msg: '缺少 openid' }, 400)
   }
@@ -194,7 +200,7 @@ async function handlePush(request, env) {
   let tid = templateId
   if (!tid) {
     if (action === 'finish') tid = FINISH_TEMPLATE_ID
-    else if (action === 'start') tid = SUBMIT_TEMPLATE_ID
+    else if (action === 'start') tid = PROGRESS_TEMPLATE_ID
     else tid = SUBMIT_TEMPLATE_ID
   }
   try {
@@ -204,7 +210,8 @@ async function handlePush(request, env) {
       items: items || [],
       orderTime: orderTime || new Date().toISOString(),
       page: 'pages/order/order',
-      orderer: orderer || '家人'
+      orderer: orderer || '家人',
+      status: action || status || ''
     })
     return jsonResponse(result)
   } catch (err) {
@@ -225,6 +232,19 @@ function buildFinishMessageData(items, orderTime) {
   items = items || []
   const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '已下单'
   return { thing4: { value: itemStr }, time1: { value: formatTime(orderTime || new Date().toISOString()) }, thing3: { value: '厨师' } }
+}
+
+// 订单进度通知：当前状态(phrase2)、商品名称(thing6)
+function buildProgressMessageData(items, status) {
+  items = items || []
+  const itemStr = items.length > 0 ? items.map(i => `${i.name||i}×${i.qty||1}`).join('、') : '菜品'
+  const phraseMap = {
+    'start': '开始制作',
+    'finish': '已完成',
+    'pending': '已接单'
+  }
+  const phrase = phraseMap[status] || status || '开始制作'
+  return { phrase2: { value: phrase }, thing6: { value: itemStr } }
 }
 
 async function getAccessToken(env) {
