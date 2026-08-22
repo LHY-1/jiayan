@@ -91,7 +91,7 @@
         <view class="chef-actions">
           <button wx:if="{{item.status==='已下单'}}" class="chef-btn cooking" bindtap="startCooking" data-order-id="{{item.orderId}}" data-dish-id="{{item.dishId}}">👨‍🍳 开始做</button>
           <button wx:if="{{item.status==='烹饪中'}}" class="chef-btn done" bindtap="finishCooking" data-order-id="{{item.orderId}}" data-dish-id="{{item.dishId}}">✅ 完成</button>
-          <button class="chef-btn delete" bindtap="deleteOrder" data-id="{{item.orderId}}">🗑️ 删单</button>
+          <button class="chef-btn delete" bindtap="deleteDish" data-order-id="{{item.orderId}}" data-dish-id="{{item.dishId}}" data-name="{{item.name}}">🗑️ 删除</button>
         </view>
       </view>
     </view>

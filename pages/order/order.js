@@ -459,15 +459,19 @@ Page({
     this.loadPendingOrders()
   },
 
-  deleteOrder(e) {
-    const orderId = Number(e.currentTarget.dataset.id)
+  deleteDish(e) {
+    const orderId = Number(e.currentTarget.dataset.orderId)
+    const dishId = Number(e.currentTarget.dataset.dishId)
+    const dishName = e.currentTarget.dataset.name
     wx.showModal({
-      title: '删除订单',
-      content: '确定删除这条订单？',
+      title: '删除菜品',
+      content: `确定删除「${dishName}」？`,
       success: (res) => {
         if (res.confirm) {
+          // 防重复：立即从列表移除
+          this.setData({ pendingOrders: this.data.pendingOrders.filter(d => !(d.orderId === orderId && d.dishId === dishId)) })
           wx.request({
-            url: WORKER_URL + '/order?id=' + orderId,
+            url: WORKER_URL + '/order?id=' + orderId + '&dishId=' + dishId,
             method: 'DELETE',
             success: () => {
               wx.showToast({ title: '已删除', icon: 'success' })

@@ -138,13 +138,39 @@ async function handleFetchOrders(env) {
 async function handleDeleteOrder(request, env) {
   const url = new URL(request.url)
   const orderId = url.searchParams.get('id')
+  const dishId = url.searchParams.get('dishId')
   if (!orderId) return jsonResponse({ code: 400, msg: '缺少 order id' }, 400)
 
   const raw = await env.ORDERS_KV.get(ALL_ORDERS_KV_KEY)
   let orders = raw ? JSON.parse(raw) : []
-  orders = orders.filter(o => o.id !== Number(orderId))
+
+  // 如果指定了 dishId，只删这道菜
+  if (dishId) {
+    const order = orders.find(o => o.id === Number(orderId))
+    if (!order) return jsonResponse({ code: 404, msg: '订单不存在' }, 404)
+    order.items = (order.items || []).filter(d => d.id !== Number(dishId))
+    // 如果订单里没菜了，删整个订单
+    if (order.items.length === 0) {
+      orders = orders.filter(o => o.id !== Number(orderId))
+    } else {
+      order.status = deriveOrderStatus(order)
+    }
+  } else {
+    // 没指定 dishId，删整个订单
+    orders = orders.filter(o => o.id !== Number(orderId))
+  }
   await env.ORDERS_KV.put(ALL_ORDERS_KV_KEY, JSON.stringify(orders), { expirationTtl: 86400 * 7 })
   return jsonResponse({ code: 0, msg: '删除成功' })
+}
+
+// 派生订单状态
+function deriveOrderStatus(order) {
+  const items = order.items || []
+  if (items.length === 0) return '已下单'
+  const allDone = items.every(i => (i.status || '已下单') === '已完成')
+  if (allDone) return '已完成'
+  const anyCooking = items.some(i => (i.status || '已下单') === '烹饪中')
+  return anyCooking ? '烹饪中' : '已下单'
 }
 
 // 管理厨师身份（唯一厨师）
